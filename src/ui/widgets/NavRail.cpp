@@ -17,6 +17,9 @@ constexpr int kKindAddCategory = 2;
 
 NavRail::NavRail(QWidget* parent) : QWidget(parent) {
     setObjectName("NavRail");
+    // Un QWidget personalizado no pinta background-color/border del QSS
+    // por si solo; hay que decirle explicitamente que respete el estilo.
+    setAttribute(Qt::WA_StyledBackground, true);
     setFixedWidth(220);
 
     auto* layout = new QVBoxLayout(this);

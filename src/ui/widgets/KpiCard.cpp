@@ -8,6 +8,7 @@ namespace ui {
 
 KpiCard::KpiCard(const QString& title, QWidget* parent) : QWidget(parent) {
     setObjectName("SurfaceCard");
+    setAttribute(Qt::WA_StyledBackground, true);
 
     auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(20, 18, 20, 18);

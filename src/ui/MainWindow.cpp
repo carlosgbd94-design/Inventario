@@ -43,12 +43,14 @@ MainWindow::MainWindow(QSqlDatabase& db, QWidget* parent)
 QWidget* MainWindow::buildIntroPage() {
     auto* root = new QWidget(this);
     root->setObjectName("AppRoot");
+    root->setAttribute(Qt::WA_StyledBackground, true);
 
     auto* rootLayout = new QVBoxLayout(root);
     rootLayout->setAlignment(Qt::AlignCenter);
 
     auto* card = new QWidget(root);
     card->setObjectName("SurfaceCard");
+    card->setAttribute(Qt::WA_StyledBackground, true);
     card->setFixedWidth(360);
 
     auto* cardLayout = new QVBoxLayout(card);
@@ -93,6 +95,7 @@ QWidget* MainWindow::buildIntroPage() {
 QWidget* MainWindow::buildShellPage() {
     auto* root = new QWidget(this);
     root->setObjectName("AppRoot");
+    root->setAttribute(Qt::WA_StyledBackground, true);
 
     auto* layout = new QHBoxLayout(root);
     layout->setContentsMargins(0, 0, 0, 0);
