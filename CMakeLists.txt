@@ -57,8 +57,24 @@ qt_add_executable(Inventario WIN32
     src/main.cpp
     src/app/ThemeManager.h
     src/app/ThemeManager.cpp
+    src/app/Animations.h
+    src/app/Animations.cpp
     src/ui/MainWindow.h
     src/ui/MainWindow.cpp
+    src/ui/widgets/NavRail.h
+    src/ui/widgets/NavRail.cpp
+    src/ui/widgets/KpiCard.h
+    src/ui/widgets/KpiCard.cpp
+    src/ui/views/DashboardView.h
+    src/ui/views/DashboardView.cpp
+    src/ui/views/InventoryView.h
+    src/ui/views/InventoryView.cpp
+    src/ui/models/ProductTableModel.h
+    src/ui/models/ProductTableModel.cpp
+    src/ui/dialogs/ProductDialog.h
+    src/ui/dialogs/ProductDialog.cpp
+    src/ui/dialogs/MovementDialog.h
+    src/ui/dialogs/MovementDialog.cpp
     resources/app.qrc
 )
 

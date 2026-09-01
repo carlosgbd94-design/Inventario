@@ -72,3 +72,130 @@ QScrollBar::handle:vertical:hover {
 QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
     height: 0;
 }
+
+/* --- Rail de navegacion --- */
+
+#NavRail {
+    background-color: #1B1E24;
+    border-right: 1px solid #2E323C;
+}
+
+#NavList {
+    background: transparent;
+    border: none;
+    font-size: 13px;
+}
+
+#NavList::item {
+    color: #A9AFBC;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin: 2px 0;
+}
+
+#NavList::item:hover {
+    background-color: #21242C;
+    color: #F5F1EA;
+}
+
+#NavList::item:selected {
+    background-color: #2E2718;
+    color: #E4B074;
+    font-weight: 600;
+}
+
+/* --- KPI --- */
+
+#KpiValueLabel {
+    font-size: 26px;
+    font-weight: 700;
+    color: #F5F1EA;
+}
+
+/* --- Botones secundarios --- */
+
+QPushButton {
+    background-color: #21242C;
+    color: #F5F1EA;
+    border: 1px solid #2E323C;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 13px;
+}
+
+QPushButton:hover:enabled {
+    background-color: #262A33;
+    border-color: #3A3F4B;
+}
+
+QPushButton:disabled {
+    color: #6B7080;
+}
+
+/* --- Campos de entrada --- */
+
+QLineEdit, QComboBox, QDoubleSpinBox, QSpinBox {
+    background-color: #1B1E24;
+    border: 1px solid #2E323C;
+    border-radius: 8px;
+    padding: 6px 10px;
+    color: #F5F1EA;
+    selection-background-color: #D79A52;
+}
+
+QLineEdit:focus, QComboBox:focus, QDoubleSpinBox:focus, QSpinBox:focus {
+    border-color: #D79A52;
+}
+
+QComboBox::drop-down {
+    border: none;
+    width: 22px;
+}
+
+QComboBox QAbstractItemView {
+    background-color: #21242C;
+    border: 1px solid #2E323C;
+    color: #F5F1EA;
+    selection-background-color: #2E2718;
+    selection-color: #E4B074;
+}
+
+/* --- Tabla de inventario --- */
+
+QTableView {
+    background-color: #15171C;
+    alternate-background-color: #191B21;
+    gridline-color: #2E323C;
+    border: 1px solid #2E323C;
+    border-radius: 10px;
+    selection-background-color: #2E2718;
+    selection-color: #F5F1EA;
+}
+
+QTableView::item {
+    padding: 6px 10px;
+    border: none;
+}
+
+QHeaderView::section {
+    background-color: #1B1E24;
+    color: #A9AFBC;
+    padding: 8px 10px;
+    border: none;
+    border-bottom: 1px solid #2E323C;
+    font-weight: 600;
+}
+
+/* --- Dialogos --- */
+
+QDialog {
+    background-color: #21242C;
+}
+
+QLabel {
+    background: transparent;
+}
+
+QMessageBox {
+    background-color: #21242C;
+}
