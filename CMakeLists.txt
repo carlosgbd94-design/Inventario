@@ -84,6 +84,10 @@ qt_add_executable(Inventario WIN32
     resources/app.qrc
 )
 
+if(WIN32)
+    target_sources(Inventario PRIVATE resources/app.rc)
+endif()
+
 target_include_directories(Inventario PRIVATE
     "${CMAKE_SOURCE_DIR}/src"
     "${CMAKE_BINARY_DIR}/generated"
@@ -104,3 +108,9 @@ set_target_properties(Inventario PROPERTIES
 
 enable_testing()
 add_subdirectory(tests)
+
+option(INVENTARIO_BUILD_TOOLS "Compilar herramientas internas (regenerar assets/logo.ico, etc.)" OFF)
+if(INVENTARIO_BUILD_TOOLS)
+    qt_add_executable(svg2png tools/svg2png.cpp)
+    target_link_libraries(svg2png PRIVATE Qt6::Gui Qt6::Svg)
+endif()

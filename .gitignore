@@ -1,6 +1,8 @@
 build/
 build-*/
 out/
+dist/
+installer/output/
 CMakeUserPresets.json
 *.user
 *.obj
@@ -8,7 +10,6 @@ CMakeUserPresets.json
 *.ilk
 *.exe
 *.dll
-!installer/*.exe
 .vs/
 .vscode/
 *.db
