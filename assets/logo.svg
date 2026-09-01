@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="boardGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#D79A52"/>
+      <stop offset="1" stop-color="#B97B34"/>
+    </linearGradient>
+    <linearGradient id="paperGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FBF7F0"/>
+      <stop offset="1" stop-color="#EFE8DA"/>
+    </linearGradient>
+  </defs>
+
+  <!-- clipboard back board -->
+  <rect x="21" y="16" width="86" height="102" rx="11" fill="url(#boardGrad)"/>
+
+  <!-- clip -->
+  <rect x="50" y="6" width="28" height="18" rx="5" fill="#2B2E36"/>
+  <rect x="55" y="2" width="18" height="12" rx="4" fill="#AEB4BF"/>
+
+  <!-- paper -->
+  <rect x="29" y="27" width="70" height="82" rx="6" fill="url(#paperGrad)"/>
+
+  <!-- inventory list rows -->
+  <g fill="none" stroke="#7C828D" stroke-width="4" stroke-linecap="round">
+    <line x1="49" y1="42" x2="90" y2="42"/>
+    <line x1="49" y1="58" x2="90" y2="58"/>
+    <line x1="49" y1="74" x2="90" y2="74"/>
+    <line x1="49" y1="90" x2="82" y2="90"/>
+  </g>
+  <g fill="none" stroke="#C98A3B" stroke-width="3.5">
+    <rect x="37" y="38" width="8" height="8" rx="2"/>
+    <rect x="37" y="54" width="8" height="8" rx="2"/>
+    <rect x="37" y="70" width="8" height="8" rx="2"/>
+    <rect x="37" y="86" width="8" height="8" rx="2"/>
+  </g>
+  <path d="M38.5 42 L41 44.5 L46 39" fill="none" stroke="#C98A3B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M38.5 58 L41 60.5 L46 55" fill="none" stroke="#C98A3B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- crossed pencils -->
+  <g transform="translate(64,66) rotate(-38)">
+    <rect x="-52" y="-8" width="94" height="16" rx="3" fill="#2B2E36"/>
+    <polygon points="42,-8 42,8 62,0" fill="#E4B074"/>
+    <polygon points="56,-3 56,3 66,0" fill="#3A3D46"/>
+    <rect x="-66" y="-8" width="14" height="16" fill="#AEB4BF"/>
+    <rect x="-78" y="-8" width="14" height="16" rx="4" fill="#E48E93"/>
+  </g>
+  <g transform="translate(64,66) rotate(38) scale(-1,1)">
+    <rect x="-52" y="-8" width="94" height="16" rx="3" fill="#3A3D46"/>
+    <polygon points="42,-8 42,8 62,0" fill="#E4B074"/>
+    <polygon points="56,-3 56,3 66,0" fill="#2B2E36"/>
+    <rect x="-66" y="-8" width="14" height="16" fill="#C7CCD6"/>
+    <rect x="-78" y="-8" width="14" height="16" rx="4" fill="#D97A88"/>
+  </g>
+</svg>

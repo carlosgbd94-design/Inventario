@@ -1,0 +1,74 @@
+/* Inventario — tema propio (grafito + ambar), sin estilos nativos de Windows */
+
+* {
+    font-family: "Segoe UI", sans-serif;
+    outline: none;
+}
+
+QMainWindow, QWidget#AppRoot {
+    background-color: #15171C;
+}
+
+QWidget {
+    color: #F5F1EA;
+}
+
+#SurfaceCard {
+    background-color: #21242C;
+    border: 1px solid #2E323C;
+    border-radius: 14px;
+}
+
+#TitleLabel {
+    font-size: 22px;
+    font-weight: 600;
+    color: #F5F1EA;
+}
+
+#SubtitleLabel {
+    font-size: 13px;
+    color: #A9AFBC;
+}
+
+#VersionLabel {
+    font-size: 11px;
+    color: #6B7080;
+}
+
+QPushButton#PrimaryButton {
+    background-color: #D79A52;
+    color: #1C1406;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 22px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+QPushButton#PrimaryButton:hover {
+    background-color: #E4B074;
+}
+
+QPushButton#PrimaryButton:pressed {
+    background-color: #B97B34;
+}
+
+QScrollBar:vertical {
+    background: transparent;
+    width: 10px;
+    margin: 0;
+}
+
+QScrollBar::handle:vertical {
+    background: #2E323C;
+    border-radius: 5px;
+    min-height: 24px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background: #3A3F4B;
+}
+
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    height: 0;
+}
