@@ -33,28 +33,36 @@ jobs:
           version: "6.10.3"
           arch: "win64_msvc2022_64"
 
+      - name: Configurar entorno de MSVC (cl.exe, rc.exe)
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Instalar Ninja
+        uses: seanmiddleditch/gha-setup-ninja@v5
+
       - name: Configurar CMake
-        run: >
-          cmake -S . -B build-release -G "Visual Studio 17 2022" -A x64
-          -DCMAKE_BUILD_TYPE=Release
-          -DINVENTARIO_VERSION_OVERRIDE=${{ steps.version.outputs.version }}
+        shell: pwsh
+        run: cmake -S . -B build-release -G Ninja -DCMAKE_BUILD_TYPE=Release "-DINVENTARIO_VERSION_OVERRIDE=${{ steps.version.outputs.version }}"
 
       - name: Compilar
-        run: cmake --build build-release --config Release --target Inventario
+        shell: pwsh
+        run: cmake --build build-release --target Inventario
 
       - name: Correr pruebas unitarias
+        shell: pwsh
         run: |
-          cmake --build build-release --config Release --target InventoryEngineTest CutoffEngineTest UpdateCheckerTest
-          ctest --test-dir build-release -C Release --output-on-failure
+          cmake --build build-release --target InventoryEngineTest CutoffEngineTest UpdateCheckerTest
+          ctest --test-dir build-release --output-on-failure
 
       - name: Empaquetar dependencias de Qt (windeployqt)
         shell: pwsh
-        run: windeployqt --release --no-translations --no-opengl-sw build-release\Release\Inventario.exe
+        run: windeployqt --release --no-translations --no-opengl-sw build-release\Inventario.exe
 
       - name: Quitar drivers de SQL sin usar (solo SQLite)
         shell: pwsh
         run: |
-          Get-ChildItem build-release\Release\sqldrivers -Filter "*.dll" |
+          Get-ChildItem build-release\sqldrivers -Filter "*.dll" |
             Where-Object { $_.Name -ne "qsqlite.dll" } |
             Remove-Item -Force
 
@@ -62,10 +70,10 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Path dist | Out-Null
-          Copy-Item build-release\Release\Inventario.exe dist
-          Get-ChildItem build-release\Release -Filter "*.dll" | ForEach-Object { Copy-Item $_.FullName dist }
+          Copy-Item build-release\Inventario.exe dist
+          Get-ChildItem build-release -Filter "*.dll" | ForEach-Object { Copy-Item $_.FullName dist }
           foreach ($sub in @("platforms","sqldrivers","styles","imageformats","iconengines","generic","networkinformation","tls")) {
-            $src = "build-release\Release\$sub"
+            $src = "build-release\$sub"
             if (Test-Path $src) { Copy-Item $src "dist\$sub" -Recurse }
           }
 
@@ -74,8 +82,7 @@ jobs:
 
       - name: Compilar el instalador
         shell: pwsh
-        run: |
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "/DMyAppVersion=${{ steps.version.outputs.version }}" installer\setup.iss
+        run: '& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "/DMyAppVersion=${{ steps.version.outputs.version }}" installer\setup.iss'
 
       - name: Publicar el Release en GitHub
         uses: softprops/action-gh-release@v2
