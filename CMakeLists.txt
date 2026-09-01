@@ -14,13 +14,43 @@ endif()
 
 list(APPEND CMAKE_PREFIX_PATH "C:/Qt/6.10.3/msvc2022_64")
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets Sql Network PrintSupport Svg SvgWidgets)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Sql Network PrintSupport Svg SvgWidgets Test)
 qt_standard_project_setup()
 
 configure_file(
     "${CMAKE_SOURCE_DIR}/src/version.h.in"
     "${CMAKE_BINARY_DIR}/generated/version.h"
     @ONLY
+)
+
+# InventarioCore: capas de datos (SQLite) y dominio (reglas de negocio),
+# sin nada de UI. La comparten el ejecutable y las pruebas.
+add_library(InventarioCore STATIC
+    src/data/Models.h
+    src/data/Models.cpp
+    src/data/Database.h
+    src/data/Database.cpp
+    src/data/CategoryRepository.h
+    src/data/CategoryRepository.cpp
+    src/data/ProductRepository.h
+    src/data/ProductRepository.cpp
+    src/data/MovementRepository.h
+    src/data/MovementRepository.cpp
+    src/data/CutoffRepository.h
+    src/data/CutoffRepository.cpp
+    src/domain/InventoryEngine.h
+    src/domain/InventoryEngine.cpp
+    src/domain/CutoffEngine.h
+    src/domain/CutoffEngine.cpp
+)
+
+target_include_directories(InventarioCore PUBLIC
+    "${CMAKE_SOURCE_DIR}/src"
+    "${CMAKE_BINARY_DIR}/generated"
+)
+
+target_link_libraries(InventarioCore PUBLIC
+    Qt6::Sql
 )
 
 qt_add_executable(Inventario WIN32
@@ -38,8 +68,8 @@ target_include_directories(Inventario PRIVATE
 )
 
 target_link_libraries(Inventario PRIVATE
+    InventarioCore
     Qt6::Widgets
-    Qt6::Sql
     Qt6::Network
     Qt6::PrintSupport
     Qt6::Svg
@@ -50,7 +80,5 @@ set_target_properties(Inventario PROPERTIES
     OUTPUT_NAME "Inventario"
 )
 
-if(BUILD_TESTING)
-    enable_testing()
-    add_subdirectory(tests)
-endif()
+enable_testing()
+add_subdirectory(tests)
