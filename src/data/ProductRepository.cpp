@@ -77,9 +77,9 @@ qint64 ProductRepository::insert(const Product& product) {
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     )");
     query.addBindValue(product.categoryId);
-    query.addBindValue(product.name);
-    query.addBindValue(product.variant);
-    query.addBindValue(product.unit);
+    query.addBindValue(notNull(product.name));
+    query.addBindValue(notNull(product.variant));
+    query.addBindValue(notNull(product.unit));
     query.addBindValue(product.unitCost);
     query.addBindValue(product.currentQty);
     query.addBindValue(product.minStock);
@@ -99,9 +99,9 @@ bool ProductRepository::update(const Product& product) {
         WHERE id = ?
     )");
     query.addBindValue(product.categoryId);
-    query.addBindValue(product.name);
-    query.addBindValue(product.variant);
-    query.addBindValue(product.unit);
+    query.addBindValue(notNull(product.name));
+    query.addBindValue(notNull(product.variant));
+    query.addBindValue(notNull(product.unit));
     query.addBindValue(product.unitCost);
     query.addBindValue(product.minStock);
     query.addBindValue(product.active ? 1 : 0);

@@ -12,6 +12,7 @@
 #include <QVBoxLayout>
 
 #include "app/Animations.h"
+#include "ui/views/CutoffView.h"
 #include "ui/views/DashboardView.h"
 #include "ui/views/InventoryView.h"
 #include "ui/widgets/NavRail.h"
@@ -26,7 +27,8 @@ MainWindow::MainWindow(QSqlDatabase& db, QWidget* parent)
       m_movementRepo(db),
       m_cutoffRepo(db),
       m_inventoryEngine(db, m_productRepo, m_movementRepo),
-      m_cutoffEngine(db, m_productRepo, m_cutoffRepo) {
+      m_cutoffEngine(db, m_productRepo, m_cutoffRepo),
+      m_reportEngine(m_productRepo, m_categoryRepo, m_cutoffRepo) {
     setObjectName("AppRoot");
     setWindowTitle(APP_NAME);
     resize(1180, 760);
@@ -110,8 +112,13 @@ QWidget* MainWindow::buildShellPage() {
     m_dashboard = new DashboardView(m_contentStack);
     m_contentStack->addWidget(m_dashboard);
 
-    m_inventoryView = new InventoryView(m_categoryRepo, m_productRepo, m_movementRepo, m_inventoryEngine, m_contentStack);
+    m_inventoryView = new InventoryView(m_categoryRepo, m_productRepo, m_movementRepo, m_inventoryEngine,
+                                         m_reportEngine, m_contentStack);
     m_contentStack->addWidget(m_inventoryView);
+
+    m_cutoffView = new CutoffView(m_productRepo, m_categoryRepo, m_cutoffRepo, m_cutoffEngine, m_reportEngine,
+                                   m_contentStack);
+    m_contentStack->addWidget(m_cutoffView);
 
     connect(m_navRail, &NavRail::dashboardSelected, this, [this]() {
         refreshDashboard();
@@ -121,8 +128,13 @@ QWidget* MainWindow::buildShellPage() {
         m_inventoryView->setCategory(category);
         app::animatedSetCurrentIndex(m_contentStack, 1);
     });
+    connect(m_navRail, &NavRail::cutoffsSelected, this, [this]() {
+        m_cutoffView->reload();
+        app::animatedSetCurrentIndex(m_contentStack, 2);
+    });
     connect(m_navRail, &NavRail::addCategoryRequested, this, &MainWindow::onAddCategory);
     connect(m_inventoryView, &InventoryView::inventoryChanged, this, &MainWindow::refreshDashboard);
+    connect(m_cutoffView, &CutoffView::cutoffsChanged, this, &MainWindow::refreshDashboard);
 
     return root;
 }

@@ -16,7 +16,7 @@ qint64 MovementRepository::insert(const StockMovement& movement) {
     query.addBindValue(movementTypeToString(movement.type));
     query.addBindValue(movement.quantity);
     query.addBindValue(movement.date.toString(Qt::ISODate));
-    query.addBindValue(movement.note);
+    query.addBindValue(notNull(movement.note));
     if (!query.exec()) {
         return -1;
     }

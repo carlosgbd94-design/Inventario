@@ -42,6 +42,8 @@ add_library(InventarioCore STATIC
     src/domain/InventoryEngine.cpp
     src/domain/CutoffEngine.h
     src/domain/CutoffEngine.cpp
+    src/domain/ReportEngine.h
+    src/domain/ReportEngine.cpp
 )
 
 target_include_directories(InventarioCore PUBLIC
@@ -69,12 +71,16 @@ qt_add_executable(Inventario WIN32
     src/ui/views/DashboardView.cpp
     src/ui/views/InventoryView.h
     src/ui/views/InventoryView.cpp
+    src/ui/views/CutoffView.h
+    src/ui/views/CutoffView.cpp
     src/ui/models/ProductTableModel.h
     src/ui/models/ProductTableModel.cpp
     src/ui/dialogs/ProductDialog.h
     src/ui/dialogs/ProductDialog.cpp
     src/ui/dialogs/MovementDialog.h
     src/ui/dialogs/MovementDialog.cpp
+    src/ui/PdfExporter.h
+    src/ui/PdfExporter.cpp
     resources/app.qrc
 )
 

@@ -21,6 +21,7 @@ private slots:
     void cierraUnCorteYCongelaElStock();
     void noPermiteCerrarElMismoPeriodoDosVeces();
     void compareWithPreviousCalculaDeltas();
+    void closeMonthAceptaNotaNula();
 
 private:
     std::unique_ptr<Database> m_db;
@@ -103,6 +104,19 @@ void CutoffEngineTest::compareWithPreviousCalculaDeltas() {
     QCOMPARE(comparative.first().previousQty, 60.0);
     QCOMPARE(comparative.first().currentQty, 45.0);
     QCOMPARE(comparative.first().delta, -15.0);
+}
+
+void CutoffEngineTest::closeMonthAceptaNotaNula() {
+    // Reproduce el bug real encontrado en la UI: un QLineEdit/QInputDialog
+    // sin tocar puede devolver una QString nula (distinta de ""), y
+    // bindear eso en SQLite viola la columna NOT NULL de `note`. El motor
+    // debe funcionar sin importar lo que la UI le pase.
+    ProductRepository products(m_db->handle());
+    CutoffRepository cutoffs(m_db->handle());
+    CutoffEngine engine(m_db->handle(), products, cutoffs);
+
+    const auto result = engine.closeMonth("2026-09", QString());
+    QVERIFY(result.ok);
 }
 
 QTEST_MAIN(CutoffEngineTest)

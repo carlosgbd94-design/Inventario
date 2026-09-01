@@ -25,6 +25,7 @@ public:
 signals:
     void dashboardSelected();
     void categorySelected(const data::Category& category);
+    void cutoffsSelected();
     void addCategoryRequested();
 
 private:

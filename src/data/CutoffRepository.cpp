@@ -41,9 +41,9 @@ std::optional<MonthlyCutoff> CutoffRepository::byPeriod(const QString& period) c
 qint64 CutoffRepository::insertCutoff(const MonthlyCutoff& cutoff) {
     QSqlQuery query(m_db);
     query.prepare("INSERT INTO monthly_cutoff (period, closed_at, note) VALUES (?, ?, ?)");
-    query.addBindValue(cutoff.period);
+    query.addBindValue(notNull(cutoff.period));
     query.addBindValue(cutoff.closedAt.toString(Qt::ISODate));
-    query.addBindValue(cutoff.note);
+    query.addBindValue(notNull(cutoff.note));
     if (!query.exec()) {
         return -1;
     }

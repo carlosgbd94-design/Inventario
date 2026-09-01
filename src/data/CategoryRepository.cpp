@@ -41,8 +41,8 @@ std::optional<Category> CategoryRepository::byId(qint64 id) const {
 qint64 CategoryRepository::insert(const Category& category) {
     QSqlQuery query(m_db);
     query.prepare("INSERT INTO category (name, color) VALUES (?, ?)");
-    query.addBindValue(category.name);
-    query.addBindValue(category.color);
+    query.addBindValue(notNull(category.name));
+    query.addBindValue(notNull(category.color));
     if (!query.exec()) {
         return -1;
     }
@@ -52,8 +52,8 @@ qint64 CategoryRepository::insert(const Category& category) {
 bool CategoryRepository::update(const Category& category) {
     QSqlQuery query(m_db);
     query.prepare("UPDATE category SET name = ?, color = ? WHERE id = ?");
-    query.addBindValue(category.name);
-    query.addBindValue(category.color);
+    query.addBindValue(notNull(category.name));
+    query.addBindValue(notNull(category.color));
     query.addBindValue(category.id);
     return query.exec();
 }

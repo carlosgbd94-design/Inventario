@@ -5,6 +5,15 @@
 
 namespace data {
 
+// Convierte una QString nula (QString(), distinta de "") en una cadena
+// vacia normal. Usar SIEMPRE antes de bindear texto libre proveniente de
+// UI (QLineEdit/QInputDialog sin editar puede devolver una QString nula)
+// a una columna NOT NULL: SQLite/Qt insertan NULL real si el valor
+// bindeado es una QString nula, aunque la columna tenga DEFAULT ''.
+inline QString notNull(const QString& value) {
+    return value.isNull() ? QString("") : value;
+}
+
 // Nota: los campos QString se inicializan con "" (cadena vacia) y no con
 // QString() (cadena nula) a proposito. QString() e "" no son lo mismo
 // para Qt: bindear una QString nula en QSqlQuery la manda como SQL NULL,

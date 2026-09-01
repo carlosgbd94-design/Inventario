@@ -13,6 +13,7 @@ constexpr int kRoleCategoryId = Qt::UserRole + 1;
 constexpr int kKindDashboard = 0;
 constexpr int kKindCategory = 1;
 constexpr int kKindAddCategory = 2;
+constexpr int kKindCutoffs = 3;
 } // namespace
 
 NavRail::NavRail(QWidget* parent) : QWidget(parent) {
@@ -74,6 +75,9 @@ void NavRail::rebuildList() {
         item->setData(kRoleCategoryId, category.id);
     }
 
+    auto* cutoffsItem = new QListWidgetItem("Cortes mensuales", m_list);
+    cutoffsItem->setData(kRoleKind, kKindCutoffs);
+
     auto* addItem = new QListWidgetItem("+  Nueva categoria", m_list);
     addItem->setData(kRoleKind, kKindAddCategory);
     addItem->setFlags(addItem->flags() & ~Qt::ItemIsSelectable);
@@ -91,6 +95,8 @@ void NavRail::onItemChanged(QListWidgetItem* current, QListWidgetItem* /*previou
     const int kind = current->data(kRoleKind).toInt();
     if (kind == kKindDashboard) {
         emit dashboardSelected();
+    } else if (kind == kKindCutoffs) {
+        emit cutoffsSelected();
     } else if (kind == kKindCategory) {
         const qint64 categoryId = current->data(kRoleCategoryId).toLongLong();
         for (const data::Category& category : m_categories) {

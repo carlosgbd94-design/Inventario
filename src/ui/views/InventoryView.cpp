@@ -10,10 +10,15 @@
 #include <QTableView>
 #include <QVBoxLayout>
 
+#include <QFileDialog>
+#include <QStandardPaths>
+
 #include "data/CategoryRepository.h"
 #include "data/MovementRepository.h"
 #include "data/ProductRepository.h"
 #include "domain/InventoryEngine.h"
+#include "domain/ReportEngine.h"
+#include "ui/PdfExporter.h"
 #include "ui/dialogs/MovementDialog.h"
 #include "ui/dialogs/ProductDialog.h"
 #include "ui/models/ProductTableModel.h"
@@ -22,8 +27,13 @@ namespace ui {
 
 InventoryView::InventoryView(data::CategoryRepository& categories, data::ProductRepository& products,
                               data::MovementRepository& movements, domain::InventoryEngine& engine,
-                              QWidget* parent)
-    : QWidget(parent), m_categories(categories), m_products(products), m_movements(movements), m_engine(engine) {
+                              domain::ReportEngine& reportEngine, QWidget* parent)
+    : QWidget(parent),
+      m_categories(categories),
+      m_products(products),
+      m_movements(movements),
+      m_engine(engine),
+      m_reportEngine(reportEngine) {
     auto* rootLayout = new QVBoxLayout(this);
     rootLayout->setContentsMargins(32, 28, 32, 28);
     rootLayout->setSpacing(16);
@@ -54,6 +64,10 @@ InventoryView::InventoryView(data::CategoryRepository& categories, data::Product
     m_deactivateButton->setCursor(Qt::PointingHandCursor);
     toolbarLayout->addWidget(m_deactivateButton);
 
+    auto* exportButton = new QPushButton("Exportar PDF", this);
+    exportButton->setCursor(Qt::PointingHandCursor);
+    toolbarLayout->addWidget(exportButton);
+
     toolbarLayout->addStretch(1);
     rootLayout->addLayout(toolbarLayout);
 
@@ -82,6 +96,7 @@ InventoryView::InventoryView(data::CategoryRepository& categories, data::Product
     connect(newButton, &QPushButton::clicked, this, &InventoryView::onNewProduct);
     connect(m_movementButton, &QPushButton::clicked, this, &InventoryView::onRegisterMovement);
     connect(m_deactivateButton, &QPushButton::clicked, this, &InventoryView::onDeactivateSelected);
+    connect(exportButton, &QPushButton::clicked, this, &InventoryView::onExportPdf);
 
     updateActionButtonsEnabled();
 }
@@ -177,6 +192,23 @@ void InventoryView::onDeactivateSelected() {
     m_products.setActive(product.id, false);
     reload();
     emit inventoryChanged();
+}
+
+void InventoryView::onExportPdf() {
+    const auto report = m_reportEngine.currentStockReport(m_category.id);
+    const QString defaultName = QString("%1.pdf").arg(m_category.name);
+    const QString defaultDir = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+    const QString path = QFileDialog::getSaveFileName(this, "Exportar PDF", defaultDir + "/" + defaultName,
+                                                        "Documento PDF (*.pdf)");
+    if (path.isEmpty()) {
+        return;
+    }
+
+    if (!exportReportToPdf(report, path)) {
+        QMessageBox::warning(this, "Exportar PDF", "No se pudo generar el PDF.");
+        return;
+    }
+    QMessageBox::information(this, "Exportar PDF", QString("%1 exportado correctamente.").arg(m_category.name));
 }
 
 void InventoryView::updateActionButtonsEnabled() {

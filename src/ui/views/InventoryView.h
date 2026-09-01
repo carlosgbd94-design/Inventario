@@ -18,6 +18,7 @@ class MovementRepository;
 
 namespace domain {
 class InventoryEngine;
+class ReportEngine;
 } // namespace domain
 
 namespace ui {
@@ -32,7 +33,7 @@ class InventoryView : public QWidget {
 public:
     InventoryView(data::CategoryRepository& categories, data::ProductRepository& products,
                   data::MovementRepository& movements, domain::InventoryEngine& engine,
-                  QWidget* parent = nullptr);
+                  domain::ReportEngine& reportEngine, QWidget* parent = nullptr);
 
     void setCategory(const data::Category& category);
     void reload();
@@ -45,12 +46,14 @@ private:
     void onEditActivated(const QModelIndex& proxyIndex);
     void onRegisterMovement();
     void onDeactivateSelected();
+    void onExportPdf();
     void updateActionButtonsEnabled();
 
     data::CategoryRepository& m_categories;
     data::ProductRepository& m_products;
     data::MovementRepository& m_movements;
     domain::InventoryEngine& m_engine;
+    domain::ReportEngine& m_reportEngine;
     data::Category m_category;
 
     QLabel* m_titleLabel = nullptr;
