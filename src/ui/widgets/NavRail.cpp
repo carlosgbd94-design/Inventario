@@ -32,8 +32,13 @@ NavRail::NavRail(QWidget* parent) : QWidget(parent) {
     m_list->setSelectionMode(QAbstractItemView::SingleSelection);
     m_list->setFocusPolicy(Qt::NoFocus);
     m_list->setCursor(Qt::PointingHandCursor);
-    layout->addWidget(m_list);
-    layout->addStretch(1);
+    m_list->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    m_list->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    // La lista debe llenar todo el rail (no solo el alto de sus items):
+    // si no, se queda arrinconada arriba con un hueco vacio debajo y una
+    // barra de scroll de sobra que nadie necesita en un menu tan corto.
+    m_list->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+    layout->addWidget(m_list, 1);
 
     connect(m_list, &QListWidget::currentItemChanged, this, &NavRail::onItemChanged);
     connect(m_list, &QListWidget::itemClicked, this, [this](QListWidgetItem* item) {
