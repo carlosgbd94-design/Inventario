@@ -199,3 +199,69 @@ QLabel {
 QMessageBox {
     background-color: #21242C;
 }
+
+/* --- Barra de menu y menus desplegables --- */
+
+QMenuBar {
+    background-color: #15171C;
+    color: #A9AFBC;
+    padding: 2px 6px;
+    border-bottom: 1px solid #2E323C;
+}
+
+QMenuBar::item {
+    background: transparent;
+    padding: 6px 10px;
+    border-radius: 6px;
+}
+
+QMenuBar::item:selected, QMenuBar::item:pressed {
+    background-color: #21242C;
+    color: #F5F1EA;
+}
+
+QMenu {
+    background-color: #21242C;
+    color: #F5F1EA;
+    border: 1px solid #2E323C;
+    border-radius: 8px;
+    padding: 6px;
+}
+
+QMenu::item {
+    padding: 7px 24px 7px 12px;
+    border-radius: 6px;
+}
+
+QMenu::item:selected {
+    background-color: #2E2718;
+    color: #E4B074;
+}
+
+QMenu::separator {
+    height: 1px;
+    background: #2E323C;
+    margin: 6px 4px;
+}
+
+/* --- Progreso de descarga --- */
+
+QProgressBar {
+    background-color: #1B1E24;
+    border: 1px solid #2E323C;
+    border-radius: 6px;
+    text-align: center;
+    color: #F5F1EA;
+}
+
+QProgressBar::chunk {
+    background-color: #D79A52;
+    border-radius: 5px;
+}
+
+QTextEdit {
+    background-color: #1B1E24;
+    border: 1px solid #2E323C;
+    border-radius: 8px;
+    color: #F5F1EA;
+}

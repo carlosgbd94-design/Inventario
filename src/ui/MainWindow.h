@@ -10,6 +10,7 @@
 #include "domain/CutoffEngine.h"
 #include "domain/InventoryEngine.h"
 #include "domain/ReportEngine.h"
+#include "update/UpdateChecker.h"
 
 class QStackedWidget;
 
@@ -32,9 +33,12 @@ protected:
 private:
     QWidget* buildIntroPage();
     QWidget* buildShellPage();
+    void buildMenuBar();
     void refreshNavCategories();
     void refreshDashboard();
     void onAddCategory();
+    void checkForUpdates(bool manual);
+    void onAbout();
 
     data::CategoryRepository m_categoryRepo;
     data::ProductRepository m_productRepo;
@@ -52,6 +56,7 @@ private:
     CutoffView* m_cutoffView = nullptr;
 
     bool m_introPlayed = false;
+    bool m_manualUpdateCheckInFlight = false;
 };
 
 } // namespace ui

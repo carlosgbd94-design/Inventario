@@ -1,0 +1,84 @@
+name: Release
+
+# Se dispara al publicar un tag "vX.Y.Z" (ej. git tag v0.2.0 && git push
+# --tags). Compila el instalador de Windows y lo publica como asset del
+# GitHub Release, para que UpdateChecker lo encuentre automaticamente.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-installer:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extraer version del tag
+        id: version
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $version = $tag.TrimStart("v")
+          "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Instalar Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.10.3"
+          arch: "win64_msvc2022_64"
+
+      - name: Configurar CMake
+        run: >
+          cmake -S . -B build-release -G "Visual Studio 17 2022" -A x64
+          -DCMAKE_BUILD_TYPE=Release
+          -DINVENTARIO_VERSION_OVERRIDE=${{ steps.version.outputs.version }}
+
+      - name: Compilar
+        run: cmake --build build-release --config Release --target Inventario
+
+      - name: Correr pruebas unitarias
+        run: |
+          cmake --build build-release --config Release --target InventoryEngineTest CutoffEngineTest UpdateCheckerTest
+          ctest --test-dir build-release -C Release --output-on-failure
+
+      - name: Empaquetar dependencias de Qt (windeployqt)
+        shell: pwsh
+        run: windeployqt --release --no-translations --no-opengl-sw build-release\Release\Inventario.exe
+
+      - name: Quitar drivers de SQL sin usar (solo SQLite)
+        shell: pwsh
+        run: |
+          Get-ChildItem build-release\Release\sqldrivers -Filter "*.dll" |
+            Where-Object { $_.Name -ne "qsqlite.dll" } |
+            Remove-Item -Force
+
+      - name: Armar carpeta de distribucion limpia
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path dist | Out-Null
+          Copy-Item build-release\Release\Inventario.exe dist
+          Get-ChildItem build-release\Release -Filter "*.dll" | ForEach-Object { Copy-Item $_.FullName dist }
+          foreach ($sub in @("platforms","sqldrivers","styles","imageformats","iconengines","generic","networkinformation","tls")) {
+            $src = "build-release\Release\$sub"
+            if (Test-Path $src) { Copy-Item $src "dist\$sub" -Recurse }
+          }
+
+      - name: Instalar Inno Setup
+        run: choco install innosetup -y --no-progress
+
+      - name: Compilar el instalador
+        shell: pwsh
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "/DMyAppVersion=${{ steps.version.outputs.version }}" installer\setup.iss
+
+      - name: Publicar el Release en GitHub
+        uses: softprops/action-gh-release@v2
+        with:
+          files: installer\output\InventarioSetup-${{ steps.version.outputs.version }}.exe
+          generate_release_notes: true

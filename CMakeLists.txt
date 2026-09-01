@@ -17,6 +17,18 @@ list(APPEND CMAKE_PREFIX_PATH "C:/Qt/6.10.3/msvc2022_64")
 find_package(Qt6 REQUIRED COMPONENTS Widgets Sql Network PrintSupport Svg SvgWidgets Test)
 qt_standard_project_setup()
 
+# CI pasa esto con la version real del tag (ej. -DINVENTARIO_VERSION_OVERRIDE=1.2.0)
+# para que el .exe que se publica quede con la version correcta. En
+# builds locales de desarrollo se usa la version fija de project() de
+# arriba.
+if(DEFINED INVENTARIO_VERSION_OVERRIDE)
+    string(REPLACE "." ";" _inventario_version_parts "${INVENTARIO_VERSION_OVERRIDE}")
+    list(GET _inventario_version_parts 0 PROJECT_VERSION_MAJOR)
+    list(GET _inventario_version_parts 1 PROJECT_VERSION_MINOR)
+    list(GET _inventario_version_parts 2 PROJECT_VERSION_PATCH)
+    set(PROJECT_VERSION "${INVENTARIO_VERSION_OVERRIDE}")
+endif()
+
 configure_file(
     "${CMAKE_SOURCE_DIR}/src/version.h.in"
     "${CMAKE_BINARY_DIR}/generated/version.h"
@@ -44,6 +56,10 @@ add_library(InventarioCore STATIC
     src/domain/CutoffEngine.cpp
     src/domain/ReportEngine.h
     src/domain/ReportEngine.cpp
+    src/update/UpdateChecker.h
+    src/update/UpdateChecker.cpp
+    src/update/UpdateDownloader.h
+    src/update/UpdateDownloader.cpp
 )
 
 target_include_directories(InventarioCore PUBLIC
@@ -53,6 +69,7 @@ target_include_directories(InventarioCore PUBLIC
 
 target_link_libraries(InventarioCore PUBLIC
     Qt6::Sql
+    Qt6::Network
 )
 
 qt_add_executable(Inventario WIN32
@@ -81,6 +98,8 @@ qt_add_executable(Inventario WIN32
     src/ui/dialogs/MovementDialog.cpp
     src/ui/PdfExporter.h
     src/ui/PdfExporter.cpp
+    src/ui/dialogs/UpdateDialog.h
+    src/ui/dialogs/UpdateDialog.cpp
     resources/app.qrc
 )
 

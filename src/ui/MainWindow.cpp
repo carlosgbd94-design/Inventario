@@ -1,17 +1,23 @@
 #include "ui/MainWindow.h"
 
+#include <QAction>
 #include <QGraphicsOpacityEffect>
 #include <QHBoxLayout>
 #include <QInputDialog>
 #include <QLabel>
 #include <QLineEdit>
+#include <QMenu>
+#include <QMenuBar>
+#include <QMessageBox>
 #include <QPropertyAnimation>
 #include <QPushButton>
 #include <QStackedWidget>
 #include <QSvgWidget>
+#include <QTimer>
 #include <QVBoxLayout>
 
 #include "app/Animations.h"
+#include "ui/dialogs/UpdateDialog.h"
 #include "ui/views/CutoffView.h"
 #include "ui/views/DashboardView.h"
 #include "ui/views/InventoryView.h"
@@ -38,8 +44,13 @@ MainWindow::MainWindow(QSqlDatabase& db, QWidget* parent)
     m_pageStack->addWidget(buildShellPage());
     setCentralWidget(m_pageStack);
 
+    buildMenuBar();
     refreshNavCategories();
     refreshDashboard();
+
+    // Revision silenciosa al abrir: si no hay actualizacion o falla la
+    // consulta (sin internet, etc.) no molestamos a nadie con avisos.
+    QTimer::singleShot(1500, this, [this]() { checkForUpdates(false); });
 }
 
 QWidget* MainWindow::buildIntroPage() {
@@ -139,6 +150,18 @@ QWidget* MainWindow::buildShellPage() {
     return root;
 }
 
+void MainWindow::buildMenuBar() {
+    QMenu* helpMenu = menuBar()->addMenu("Ayuda");
+
+    QAction* checkUpdatesAction = helpMenu->addAction("Buscar actualizaciones...");
+    connect(checkUpdatesAction, &QAction::triggered, this, [this]() { checkForUpdates(true); });
+
+    helpMenu->addSeparator();
+
+    QAction* aboutAction = helpMenu->addAction(QString("Acerca de %1").arg(APP_NAME));
+    connect(aboutAction, &QAction::triggered, this, &MainWindow::onAbout);
+}
+
 void MainWindow::refreshNavCategories() {
     m_navRail->setCategories(m_categoryRepo.all());
 }
@@ -173,6 +196,50 @@ void MainWindow::onAddCategory() {
 
     refreshNavCategories();
     refreshDashboard();
+}
+
+void MainWindow::checkForUpdates(bool manual) {
+    if (manual && m_manualUpdateCheckInFlight) {
+        return;
+    }
+    m_manualUpdateCheckInFlight = manual;
+
+    auto* checker = new update::UpdateChecker(this);
+
+    connect(checker, &update::UpdateChecker::updateAvailable, this, [this, checker](const update::UpdateInfo& info) {
+        m_manualUpdateCheckInFlight = false;
+        checker->deleteLater();
+
+        auto* dialog = new UpdateDialog(info, this);
+        dialog->setAttribute(Qt::WA_DeleteOnClose);
+        dialog->show();
+    });
+
+    connect(checker, &update::UpdateChecker::upToDate, this, [this, checker, manual]() {
+        m_manualUpdateCheckInFlight = false;
+        checker->deleteLater();
+        if (manual) {
+            QMessageBox::information(this, "Buscar actualizaciones", "Ya tienes la version mas reciente.");
+        }
+    });
+
+    connect(checker, &update::UpdateChecker::checkFailed, this, [this, checker, manual](const QString& error) {
+        m_manualUpdateCheckInFlight = false;
+        checker->deleteLater();
+        if (manual) {
+            QMessageBox::warning(this, "Buscar actualizaciones", "No se pudo comprobar si hay actualizaciones: " + error);
+        }
+    });
+
+    checker->checkForUpdates();
+}
+
+void MainWindow::onAbout() {
+    QMessageBox::about(this, QString("Acerca de %1").arg(APP_NAME),
+                        QString("<h3>%1</h3>"
+                                "<p>Version %2</p>"
+                                "<p>Inventario de uniformes y papeleria.</p>")
+                            .arg(APP_NAME, APP_VERSION_STRING));
 }
 
 void MainWindow::showEvent(QShowEvent* event) {
