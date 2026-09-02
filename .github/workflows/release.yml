@@ -52,7 +52,7 @@ jobs:
       - name: Correr pruebas unitarias
         shell: pwsh
         run: |
-          cmake --build build-release --target InventoryEngineTest CutoffEngineTest UpdateCheckerTest
+          cmake --build build-release --target InventoryEngineTest CutoffEngineTest UpdateCheckerTest SkuGeneratorTest
           ctest --test-dir build-release --output-on-failure
 
       - name: Empaquetar dependencias de Qt (windeployqt)
