@@ -19,13 +19,16 @@ class ProductDialog : public QDialog {
     Q_OBJECT
 
 public:
-    ProductDialog(const QVector<data::Category>& categories, qint64 defaultCategoryId, QWidget* parent = nullptr);
+    ProductDialog(const QVector<data::Category>& categories, const QVector<data::Supplier>& suppliers,
+                  qint64 defaultCategoryId, QWidget* parent = nullptr);
 
     void loadProduct(const data::Product& product);
     data::Product resultProduct() const;
 
 private:
     QComboBox* m_categoryCombo = nullptr;
+    QComboBox* m_supplierCombo = nullptr;
+    QLineEdit* m_skuEdit = nullptr;
     QLineEdit* m_nameEdit = nullptr;
     QLineEdit* m_variantEdit = nullptr;
     QLineEdit* m_unitEdit = nullptr;
@@ -35,6 +38,7 @@ private:
     QLabel* m_qtyHint = nullptr;
 
     QVector<data::Category> m_categories;
+    QVector<data::Supplier> m_suppliers;
     qint64 m_productId = -1;
 };
 

@@ -16,8 +16,11 @@ InventoryEngine::InventoryEngine(QSqlDatabase& db, data::ProductRepository& prod
                                   data::MovementRepository& movements)
     : m_db(db), m_products(products), m_movements(movements) {}
 
-InventoryEngine::MovementResult InventoryEngine::registerMovement(qint64 productId, MovementType type,
-                                                                    double quantity, const QString& note) {
+InventoryEngine::MovementResult InventoryEngine::registerMovement(const MovementInput& input) {
+    const qint64 productId = input.productId;
+    const MovementType type = input.type;
+    const double quantity = input.quantity;
+
     const auto productOpt = m_products.byId(productId);
     if (!productOpt) {
         return {false, "El producto no existe.", 0.0};
@@ -59,7 +62,9 @@ InventoryEngine::MovementResult InventoryEngine::registerMovement(qint64 product
     movement.type = type;
     movement.quantity = appliedDelta;
     movement.date = QDateTime::currentDateTime();
-    movement.note = note;
+    movement.note = input.note;
+    movement.attachmentPath = input.attachmentPath;
+    movement.attachmentName = input.attachmentName;
 
     const bool movementOk = m_movements.insert(movement) >= 0;
     const bool quantityOk = movementOk && m_products.updateQuantity(productId, newQty);

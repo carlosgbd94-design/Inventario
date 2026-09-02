@@ -21,6 +21,7 @@
 #include "ui/views/CutoffView.h"
 #include "ui/views/DashboardView.h"
 #include "ui/views/InventoryView.h"
+#include "ui/views/SupplierView.h"
 #include "ui/widgets/NavRail.h"
 #include "version.h"
 
@@ -32,6 +33,7 @@ MainWindow::MainWindow(QSqlDatabase& db, QWidget* parent)
       m_productRepo(db),
       m_movementRepo(db),
       m_cutoffRepo(db),
+      m_supplierRepo(db),
       m_inventoryEngine(db, m_productRepo, m_movementRepo),
       m_cutoffEngine(db, m_productRepo, m_cutoffRepo),
       m_reportEngine(m_productRepo, m_categoryRepo, m_cutoffRepo) {
@@ -123,13 +125,16 @@ QWidget* MainWindow::buildShellPage() {
     m_dashboard = new DashboardView(m_contentStack);
     m_contentStack->addWidget(m_dashboard);
 
-    m_inventoryView = new InventoryView(m_categoryRepo, m_productRepo, m_movementRepo, m_inventoryEngine,
-                                         m_reportEngine, m_contentStack);
+    m_inventoryView = new InventoryView(m_categoryRepo, m_productRepo, m_movementRepo, m_supplierRepo,
+                                         m_inventoryEngine, m_reportEngine, m_contentStack);
     m_contentStack->addWidget(m_inventoryView);
 
     m_cutoffView = new CutoffView(m_productRepo, m_categoryRepo, m_cutoffRepo, m_cutoffEngine, m_reportEngine,
                                    m_contentStack);
     m_contentStack->addWidget(m_cutoffView);
+
+    m_supplierView = new SupplierView(m_supplierRepo, m_contentStack);
+    m_contentStack->addWidget(m_supplierView);
 
     connect(m_navRail, &NavRail::dashboardSelected, this, [this]() {
         refreshDashboard();
@@ -142,6 +147,10 @@ QWidget* MainWindow::buildShellPage() {
     connect(m_navRail, &NavRail::cutoffsSelected, this, [this]() {
         m_cutoffView->reload();
         app::animatedSetCurrentIndex(m_contentStack, 2);
+    });
+    connect(m_navRail, &NavRail::suppliersSelected, this, [this]() {
+        m_supplierView->reload();
+        app::animatedSetCurrentIndex(m_contentStack, 3);
     });
     connect(m_navRail, &NavRail::addCategoryRequested, this, &MainWindow::onAddCategory);
     connect(m_inventoryView, &InventoryView::inventoryChanged, this, &MainWindow::refreshDashboard);
@@ -235,11 +244,19 @@ void MainWindow::checkForUpdates(bool manual) {
 }
 
 void MainWindow::onAbout() {
-    QMessageBox::about(this, QString("Acerca de %1").arg(APP_NAME),
-                        QString("<h3>%1</h3>"
-                                "<p>Version %2</p>"
-                                "<p>Inventario de uniformes y papeleria.</p>")
-                            .arg(APP_NAME, APP_VERSION_STRING));
+    QMessageBox::about(
+        this, QString("Acerca de %1").arg(APP_NAME),
+        QString("<h2>%1</h2>"
+                "<p style='color:#A9AFBC'>Version %2</p>"
+                "<p>Sistema de control de inventario para uniformes y papeleria: altas y bajas de "
+                "producto, movimientos con bitacora y adjuntos, catalogo de proveedores, cortes "
+                "mensuales congelados con comparativo, exportacion a PDF, y actualizaciones "
+                "automaticas.</p>"
+                "<p><b>Creado y programado por Carlos Becerra.</b><br>"
+                "Desarrollado con C++20 y Qt 6 sobre una base de datos SQLite 100% local: "
+                "nada de tu inventario sale de esta computadora salvo cuando tu decides "
+                "exportarlo a PDF.</p>")
+            .arg(APP_NAME, APP_VERSION_STRING));
 }
 
 void MainWindow::showEvent(QShowEvent* event) {

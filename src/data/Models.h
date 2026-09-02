@@ -28,12 +28,23 @@ struct Category {
 struct Product {
     qint64 id = -1;
     qint64 categoryId = -1;
+    qint64 supplierId = -1; // -1 = sin proveedor asignado
+    QString sku = "";
     QString name = "";
     QString variant = "";
     QString unit = "";
     double unitCost = 0.0;
     double currentQty = 0.0;
     double minStock = 0.0;
+    bool active = true;
+};
+
+struct Supplier {
+    qint64 id = -1;
+    QString name = "";
+    QString contact = "";
+    QString phone = "";
+    QString notes = "";
     bool active = true;
 };
 
@@ -49,6 +60,8 @@ struct StockMovement {
     double quantity = 0.0; // delta aplicado al stock (positivo = entro, negativo = salio)
     QDateTime date;
     QString note = "";
+    QString attachmentPath = ""; // ruta local a la factura/ticket adjunto, si hay
+    QString attachmentName = ""; // nombre original del archivo, para mostrar en la UI
 };
 
 struct MonthlyCutoff {

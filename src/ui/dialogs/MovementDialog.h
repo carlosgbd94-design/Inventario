@@ -23,6 +23,11 @@ public:
     double quantity() const;
     QString note() const;
 
+    // Ruta local del archivo elegido (factura/ticket), vacia si no se
+    // adjunto ninguno. InventoryView es quien lo copia a la carpeta de
+    // adjuntos de la app al confirmar el movimiento.
+    QString selectedAttachmentPath() const;
+
 private:
     void onTypeChanged(int index);
 
@@ -31,6 +36,8 @@ private:
     QLabel* m_qtyLabel = nullptr;
     QDoubleSpinBox* m_qtySpin = nullptr;
     QLineEdit* m_noteEdit = nullptr;
+    QLabel* m_attachmentLabel = nullptr;
+    QString m_attachmentPath;
 };
 
 } // namespace ui

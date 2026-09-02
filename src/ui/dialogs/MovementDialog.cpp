@@ -3,7 +3,10 @@
 #include <QComboBox>
 #include <QDialogButtonBox>
 #include <QDoubleSpinBox>
+#include <QFileDialog>
+#include <QFileInfo>
 #include <QFormLayout>
+#include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
@@ -43,6 +46,23 @@ MovementDialog::MovementDialog(const data::Product& product, QWidget* parent)
     m_noteEdit->setPlaceholderText("Opcional");
     form->addRow("Nota", m_noteEdit);
 
+    auto* attachmentLayout = new QHBoxLayout();
+    m_attachmentLabel = new QLabel("Sin archivo adjunto", this);
+    m_attachmentLabel->setObjectName("VersionLabel");
+    m_attachmentLabel->setWordWrap(true);
+    attachmentLayout->addWidget(m_attachmentLabel, 1);
+
+    auto* attachButton = new QPushButton("Adjuntar...", this);
+    attachButton->setCursor(Qt::PointingHandCursor);
+    attachmentLayout->addWidget(attachButton);
+
+    auto* clearAttachmentButton = new QPushButton("Quitar", this);
+    clearAttachmentButton->setCursor(Qt::PointingHandCursor);
+    clearAttachmentButton->setVisible(false);
+    attachmentLayout->addWidget(clearAttachmentButton);
+
+    form->addRow("Factura / ticket", attachmentLayout);
+
     rootLayout->addLayout(form);
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
@@ -55,6 +75,23 @@ MovementDialog::MovementDialog(const data::Product& product, QWidget* parent)
     connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
     connect(m_typeCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MovementDialog::onTypeChanged);
+
+    connect(attachButton, &QPushButton::clicked, this, [this, clearAttachmentButton]() {
+        const QString path = QFileDialog::getOpenFileName(this, "Adjuntar factura o ticket", {},
+                                                            "Documentos e imagenes (*.pdf *.png *.jpg *.jpeg)");
+        if (path.isEmpty()) {
+            return;
+        }
+        m_attachmentPath = path;
+        m_attachmentLabel->setText(QFileInfo(path).fileName());
+        clearAttachmentButton->setVisible(true);
+    });
+
+    connect(clearAttachmentButton, &QPushButton::clicked, this, [this, clearAttachmentButton]() {
+        m_attachmentPath.clear();
+        m_attachmentLabel->setText("Sin archivo adjunto");
+        clearAttachmentButton->setVisible(false);
+    });
 
     onTypeChanged(m_typeCombo->currentIndex());
 }
@@ -80,6 +117,10 @@ double MovementDialog::quantity() const {
 
 QString MovementDialog::note() const {
     return m_noteEdit->text().trimmed();
+}
+
+QString MovementDialog::selectedAttachmentPath() const {
+    return m_attachmentPath;
 }
 
 } // namespace ui

@@ -11,6 +11,8 @@ Product rowToProduct(const QSqlQuery& query) {
     Product product;
     product.id = query.value("id").toLongLong();
     product.categoryId = query.value("category_id").toLongLong();
+    product.supplierId = query.value("supplier_id").toLongLong();
+    product.sku = query.value("sku").toString();
     product.name = query.value("name").toString();
     product.variant = query.value("variant").toString();
     product.unit = query.value("unit").toString();
@@ -21,8 +23,8 @@ Product rowToProduct(const QSqlQuery& query) {
     return product;
 }
 
-constexpr const char* kSelectColumns =
-    "id, category_id, name, variant, unit, unit_cost, current_qty, min_stock, active";
+constexpr const char* kSelectColumns = "id, category_id, supplier_id, sku, name, variant, unit, "
+                                        "unit_cost, current_qty, min_stock, active";
 } // namespace
 
 ProductRepository::ProductRepository(QSqlDatabase& db) : m_db(db) {}
@@ -73,10 +75,12 @@ std::optional<Product> ProductRepository::byId(qint64 id) const {
 qint64 ProductRepository::insert(const Product& product) {
     QSqlQuery query(m_db);
     query.prepare(R"(
-        INSERT INTO product (category_id, name, variant, unit, unit_cost, current_qty, min_stock, active)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO product (category_id, supplier_id, sku, name, variant, unit, unit_cost, current_qty, min_stock, active)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     )");
     query.addBindValue(product.categoryId);
+    query.addBindValue(product.supplierId);
+    query.addBindValue(notNull(product.sku));
     query.addBindValue(notNull(product.name));
     query.addBindValue(notNull(product.variant));
     query.addBindValue(notNull(product.unit));
@@ -94,11 +98,13 @@ qint64 ProductRepository::insert(const Product& product) {
 bool ProductRepository::update(const Product& product) {
     QSqlQuery query(m_db);
     query.prepare(R"(
-        UPDATE product SET category_id = ?, name = ?, variant = ?, unit = ?,
+        UPDATE product SET category_id = ?, supplier_id = ?, sku = ?, name = ?, variant = ?, unit = ?,
             unit_cost = ?, min_stock = ?, active = ?
         WHERE id = ?
     )");
     query.addBindValue(product.categoryId);
+    query.addBindValue(product.supplierId);
+    query.addBindValue(notNull(product.sku));
     query.addBindValue(notNull(product.name));
     query.addBindValue(notNull(product.variant));
     query.addBindValue(notNull(product.unit));

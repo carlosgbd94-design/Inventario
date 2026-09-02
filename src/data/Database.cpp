@@ -35,6 +35,7 @@ bool Database::open(const QString& filePath) {
     }
 
     runMigrations();
+    migrateToV2();
     seedDefaultCategories();
 
     return true;
@@ -127,6 +128,52 @@ void Database::runMigrations() {
     execOrWarn(query, "CREATE INDEX IF NOT EXISTS idx_product_category ON product(category_id)");
     execOrWarn(query, "CREATE INDEX IF NOT EXISTS idx_movement_product ON stock_movement(product_id)");
     execOrWarn(query, "CREATE INDEX IF NOT EXISTS idx_snapshot_cutoff ON cutoff_snapshot(cutoff_id)");
+}
+
+namespace {
+bool tableHasColumn(QSqlDatabase& db, const QString& table, const QString& column) {
+    QSqlQuery query(db);
+    query.exec(QString("PRAGMA table_info(%1)").arg(table));
+    while (query.next()) {
+        if (query.value("name").toString().compare(column, Qt::CaseInsensitive) == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+} // namespace
+
+// v2: codigo/SKU y proveedor en producto, adjuntos en movimientos, y el
+// catalogo de proveedores. Usa ALTER TABLE (no CREATE TABLE) porque
+// bases de datos ya existentes con productos capturados no deben
+// perder nada; PRAGMA table_info evita reintentar una columna que ya
+// se agrego en una corrida anterior.
+void Database::migrateToV2() {
+    QSqlQuery query(m_db);
+
+    if (!tableHasColumn(m_db, "product", "sku")) {
+        execOrWarn(query, "ALTER TABLE product ADD COLUMN sku TEXT NOT NULL DEFAULT ''");
+    }
+    if (!tableHasColumn(m_db, "product", "supplier_id")) {
+        execOrWarn(query, "ALTER TABLE product ADD COLUMN supplier_id INTEGER NOT NULL DEFAULT -1");
+    }
+    if (!tableHasColumn(m_db, "stock_movement", "attachment_path")) {
+        execOrWarn(query, "ALTER TABLE stock_movement ADD COLUMN attachment_path TEXT NOT NULL DEFAULT ''");
+    }
+    if (!tableHasColumn(m_db, "stock_movement", "attachment_name")) {
+        execOrWarn(query, "ALTER TABLE stock_movement ADD COLUMN attachment_name TEXT NOT NULL DEFAULT ''");
+    }
+
+    execOrWarn(query, R"(
+        CREATE TABLE IF NOT EXISTS supplier (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            contact TEXT NOT NULL DEFAULT '',
+            phone TEXT NOT NULL DEFAULT '',
+            notes TEXT NOT NULL DEFAULT '',
+            active INTEGER NOT NULL DEFAULT 1
+        )
+    )");
 }
 
 void Database::seedDefaultCategories() {

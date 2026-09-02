@@ -29,6 +29,7 @@ ReportData ReportEngine::currentStockReport(std::optional<qint64> categoryId) co
     const QVector<Product> products = categoryId ? m_products.byCategory(*categoryId, true) : m_products.all(true);
     for (const Product& product : products) {
         ReportRow row;
+        row.sku = product.sku;
         row.productName = product.name;
         row.variant = product.variant;
         row.unit = product.unit;
@@ -58,6 +59,7 @@ ReportData ReportEngine::cutoffReport(qint64 cutoffId) const {
     for (const CutoffSnapshotRow& snapshot : m_cutoffs.snapshotForCutoff(cutoffId)) {
         ReportRow row;
         if (const auto product = m_products.byId(snapshot.productId)) {
+            row.sku = product->sku;
             row.productName = product->name;
             row.variant = product->variant;
             row.unit = product->unit;

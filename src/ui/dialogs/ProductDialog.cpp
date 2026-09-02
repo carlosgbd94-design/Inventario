@@ -13,8 +13,9 @@
 
 namespace ui {
 
-ProductDialog::ProductDialog(const QVector<data::Category>& categories, qint64 defaultCategoryId, QWidget* parent)
-    : QDialog(parent), m_categories(categories) {
+ProductDialog::ProductDialog(const QVector<data::Category>& categories, const QVector<data::Supplier>& suppliers,
+                              qint64 defaultCategoryId, QWidget* parent)
+    : QDialog(parent), m_categories(categories), m_suppliers(suppliers) {
     setWindowTitle("Producto");
     setModal(true);
     setMinimumWidth(360);
@@ -34,6 +35,10 @@ ProductDialog::ProductDialog(const QVector<data::Category>& categories, qint64 d
     }
     m_categoryCombo->setCurrentIndex(selectIndex);
     form->addRow("Categoria", m_categoryCombo);
+
+    m_skuEdit = new QLineEdit(this);
+    m_skuEdit->setPlaceholderText("Codigo interno o de barras (opcional)");
+    form->addRow("Codigo / SKU", m_skuEdit);
 
     m_nameEdit = new QLineEdit(this);
     m_nameEdit->setPlaceholderText("Ej. Playera polo roja");
@@ -69,6 +74,13 @@ ProductDialog::ProductDialog(const QVector<data::Category>& categories, qint64 d
     m_minStockSpin->setDecimals(2);
     form->addRow("Stock minimo (0 = sin alerta)", m_minStockSpin);
 
+    m_supplierCombo = new QComboBox(this);
+    m_supplierCombo->addItem("Sin proveedor", -1);
+    for (const data::Supplier& supplier : m_suppliers) {
+        m_supplierCombo->addItem(supplier.name, supplier.id);
+    }
+    form->addRow("Proveedor", m_supplierCombo);
+
     rootLayout->addLayout(form);
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
@@ -99,6 +111,11 @@ void ProductDialog::loadProduct(const data::Product& product) {
     if (index >= 0) {
         m_categoryCombo->setCurrentIndex(index);
     }
+    const int supplierIndex = m_supplierCombo->findData(product.supplierId);
+    if (supplierIndex >= 0) {
+        m_supplierCombo->setCurrentIndex(supplierIndex);
+    }
+    m_skuEdit->setText(product.sku);
     m_nameEdit->setText(product.name);
     m_variantEdit->setText(product.variant);
     m_unitEdit->setText(product.unit);
@@ -115,6 +132,8 @@ data::Product ProductDialog::resultProduct() const {
     data::Product product;
     product.id = m_productId;
     product.categoryId = m_categoryCombo->currentData().toLongLong();
+    product.supplierId = m_supplierCombo->currentData().toLongLong();
+    product.sku = m_skuEdit->text().trimmed();
     product.name = m_nameEdit->text().trimmed();
     product.variant = m_variantEdit->text().trimmed();
     product.unit = m_unitEdit->text().trimmed().isEmpty() ? "Pza" : m_unitEdit->text().trimmed();

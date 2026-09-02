@@ -57,7 +57,12 @@ void InventoryEngineTest::entradaAumentaStock() {
     const qint64 id = products.insert(product);
     QVERIFY(id > 0);
 
-    const auto result = engine.registerMovement(id, MovementType::Entrada, 10, "compra");
+    InventoryEngine::MovementInput input;
+    input.productId = id;
+    input.type = MovementType::Entrada;
+    input.quantity = 10;
+    input.note = "compra";
+    const auto result = engine.registerMovement(input);
     QVERIFY(result.ok);
     QCOMPARE(result.newQuantity, 15.0);
 
@@ -82,7 +87,11 @@ void InventoryEngineTest::salidaNoPuedeDejarNegativo() {
     product.currentQty = 3;
     const qint64 id = products.insert(product);
 
-    const auto result = engine.registerMovement(id, MovementType::Salida, 5);
+    InventoryEngine::MovementInput input;
+    input.productId = id;
+    input.type = MovementType::Salida;
+    input.quantity = 5;
+    const auto result = engine.registerMovement(input);
     QVERIFY(!result.ok);
 
     const auto reloaded = products.byId(id);
@@ -102,7 +111,12 @@ void InventoryEngineTest::ajusteEstableceCantidadAbsoluta() {
     product.currentQty = 20;
     const qint64 id = products.insert(product);
 
-    const auto result = engine.registerMovement(id, MovementType::Ajuste, 7, "recuento fisico");
+    InventoryEngine::MovementInput input;
+    input.productId = id;
+    input.type = MovementType::Ajuste;
+    input.quantity = 7;
+    input.note = "recuento fisico";
+    const auto result = engine.registerMovement(input);
     QVERIFY(result.ok);
     QCOMPARE(result.newQuantity, 7.0);
 

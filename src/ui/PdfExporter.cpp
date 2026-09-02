@@ -1,6 +1,7 @@
 #include "ui/PdfExporter.h"
 
 #include <QDateTime>
+#include <QFontMetrics>
 #include <QLocale>
 #include <QPageLayout>
 #include <QPageSize>
@@ -15,8 +16,9 @@ namespace ui {
 
 namespace {
 
-const QVector<double> kColumnFractions = {0.30, 0.18, 0.10, 0.12, 0.15, 0.15};
-const QStringList kHeaders = {"Producto", "Variante", "Unidad", "Cantidad", "Costo unitario", "Valor"};
+const QVector<double> kColumnFractions = {0.12, 0.24, 0.14, 0.10, 0.12, 0.14, 0.14};
+const QStringList kHeaders = {"Codigo", "Producto", "Variante", "Unidad", "Cantidad", "Costo unitario", "Valor"};
+constexpr int kFirstNumericColumn = 4;
 
 QVector<int> columnEdges(int pageWidth) {
     QVector<int> edges(kColumnFractions.size() + 1);
@@ -29,10 +31,13 @@ QVector<int> columnEdges(int pageWidth) {
 }
 
 void drawRowCells(QPainter& painter, const QVector<int>& colX, int y, int rowHeight, const QStringList& cells) {
+    const QFontMetrics metrics(painter.font());
     for (int c = 0; c < cells.size(); ++c) {
-        const Qt::Alignment align = (c >= 3) ? (Qt::AlignRight | Qt::AlignVCenter) : (Qt::AlignLeft | Qt::AlignVCenter);
+        const Qt::Alignment align =
+            (c >= kFirstNumericColumn) ? (Qt::AlignRight | Qt::AlignVCenter) : (Qt::AlignLeft | Qt::AlignVCenter);
         const QRect cellRect(colX[c] + 6, y, colX[c + 1] - colX[c] - 10, rowHeight);
-        painter.drawText(cellRect, align, cells[c]);
+        const QString elided = metrics.elidedText(cells[c], Qt::ElideRight, cellRect.width());
+        painter.drawText(cellRect, align, elided);
     }
 }
 
@@ -118,6 +123,7 @@ bool exportReportToPdf(const domain::ReportData& data, const QString& filePath) 
         painter.setFont(QFont("Segoe UI", 9));
         painter.setPen(textPrimary);
         const QStringList cells = {
+            row.sku,
             row.productName,
             row.variant,
             row.unit,

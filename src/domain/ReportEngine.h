@@ -15,6 +15,7 @@ class CutoffRepository;
 namespace domain {
 
 struct ReportRow {
+    QString sku;
     QString productName;
     QString variant;
     QString unit;

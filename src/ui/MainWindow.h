@@ -7,6 +7,7 @@
 #include "data/CutoffRepository.h"
 #include "data/MovementRepository.h"
 #include "data/ProductRepository.h"
+#include "data/SupplierRepository.h"
 #include "domain/CutoffEngine.h"
 #include "domain/InventoryEngine.h"
 #include "domain/ReportEngine.h"
@@ -20,6 +21,7 @@ class NavRail;
 class DashboardView;
 class InventoryView;
 class CutoffView;
+class SupplierView;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -44,6 +46,7 @@ private:
     data::ProductRepository m_productRepo;
     data::MovementRepository m_movementRepo;
     data::CutoffRepository m_cutoffRepo;
+    data::SupplierRepository m_supplierRepo;
     domain::InventoryEngine m_inventoryEngine;
     domain::CutoffEngine m_cutoffEngine;
     domain::ReportEngine m_reportEngine;
@@ -54,6 +57,7 @@ private:
     DashboardView* m_dashboard = nullptr;
     InventoryView* m_inventoryView = nullptr;
     CutoffView* m_cutoffView = nullptr;
+    SupplierView* m_supplierView = nullptr;
 
     bool m_introPlayed = false;
     bool m_manualUpdateCheckInFlight = false;

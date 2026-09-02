@@ -11,7 +11,7 @@ class ProductTableModel : public QAbstractTableModel {
     Q_OBJECT
 
 public:
-    enum Column { ColName = 0, ColVariant, ColUnit, ColQty, ColCost, ColValue, ColumnCount };
+    enum Column { ColSku = 0, ColName, ColVariant, ColUnit, ColQty, ColCost, ColValue, ColumnCount };
 
     explicit ProductTableModel(QObject* parent = nullptr);
 

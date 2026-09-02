@@ -25,6 +25,7 @@ public:
 
 private:
     void runMigrations();
+    void migrateToV2();
     void seedDefaultCategories();
 
     QString m_connectionName;

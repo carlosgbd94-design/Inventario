@@ -36,6 +36,7 @@ QVariant ProductTableModel::data(const QModelIndex& index, int role) const {
 
     if (role == Qt::DisplayRole) {
         switch (index.column()) {
+            case ColSku: return product.sku;
             case ColName: return product.name;
             case ColVariant: return product.variant;
             case ColUnit: return product.unit;
@@ -73,6 +74,7 @@ QVariant ProductTableModel::headerData(int section, Qt::Orientation orientation,
     }
 
     switch (section) {
+        case ColSku: return "Codigo";
         case ColName: return "Producto";
         case ColVariant: return "Variante";
         case ColUnit: return "Unidad";

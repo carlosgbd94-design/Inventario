@@ -50,6 +50,8 @@ add_library(InventarioCore STATIC
     src/data/MovementRepository.cpp
     src/data/CutoffRepository.h
     src/data/CutoffRepository.cpp
+    src/data/SupplierRepository.h
+    src/data/SupplierRepository.cpp
     src/domain/InventoryEngine.h
     src/domain/InventoryEngine.cpp
     src/domain/CutoffEngine.h
@@ -90,12 +92,20 @@ qt_add_executable(Inventario WIN32
     src/ui/views/InventoryView.cpp
     src/ui/views/CutoffView.h
     src/ui/views/CutoffView.cpp
+    src/ui/views/SupplierView.h
+    src/ui/views/SupplierView.cpp
     src/ui/models/ProductTableModel.h
     src/ui/models/ProductTableModel.cpp
+    src/ui/models/ProductFilterProxyModel.h
+    src/ui/models/ProductFilterProxyModel.cpp
     src/ui/dialogs/ProductDialog.h
     src/ui/dialogs/ProductDialog.cpp
     src/ui/dialogs/MovementDialog.h
     src/ui/dialogs/MovementDialog.cpp
+    src/ui/dialogs/MovementHistoryDialog.h
+    src/ui/dialogs/MovementHistoryDialog.cpp
+    src/ui/dialogs/SupplierDialog.h
+    src/ui/dialogs/SupplierDialog.cpp
     src/ui/PdfExporter.h
     src/ui/PdfExporter.cpp
     src/ui/dialogs/UpdateDialog.h
