@@ -27,6 +27,16 @@ jobs:
           $version = $tag.TrimStart("v")
           "version=$version" >> $env:GITHUB_OUTPUT
 
+      - name: Extraer el changelog del mensaje del tag
+        id: notes
+        shell: pwsh
+        run: |
+          $msg = (git tag -l --format="%(contents)" "${{ github.ref_name }}") -join "`n"
+          if ([string]::IsNullOrWhiteSpace($msg)) { $msg = "Inventario ${{ steps.version.outputs.version }}." }
+          "notes<<INVENTARIO_EOF" >> $env:GITHUB_OUTPUT
+          $msg >> $env:GITHUB_OUTPUT
+          "INVENTARIO_EOF" >> $env:GITHUB_OUTPUT
+
       - name: Instalar Qt
         uses: jurplel/install-qt-action@v4
         with:
@@ -88,4 +98,4 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: installer\output\InventarioSetup-${{ steps.version.outputs.version }}.exe
-          generate_release_notes: true
+          body: ${{ steps.notes.outputs.notes }}
