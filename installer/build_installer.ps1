@@ -7,7 +7,7 @@
 param(
     [string]$QtDir = "C:\Qt\6.10.3\msvc2022_64",
     [string]$InnoSetupCompiler = "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe",
-    [string]$Version = "0.1.0"
+    [string]$Version = "0.2.0"
 )
 
 $ErrorActionPreference = "Stop"
