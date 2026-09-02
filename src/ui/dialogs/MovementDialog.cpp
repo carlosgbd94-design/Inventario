@@ -3,23 +3,38 @@
 #include <QComboBox>
 #include <QDialogButtonBox>
 #include <QDoubleSpinBox>
+#include <QDragEnterEvent>
+#include <QDropEvent>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QFormLayout>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
+#include <QMimeData>
 #include <QPushButton>
 #include <QStyle>
+#include <QUrl>
 #include <QVBoxLayout>
 
 namespace ui {
+
+namespace {
+// Mismos formatos que acepta el selector de archivos del boton
+// "Adjuntar...", para que arrastrar-y-soltar no permita colar
+// cualquier cosa.
+bool isAcceptedAttachment(const QString& filePath) {
+    static const QStringList kExtensions = {"pdf", "png", "jpg", "jpeg"};
+    return kExtensions.contains(QFileInfo(filePath).suffix().toLower());
+}
+} // namespace
 
 MovementDialog::MovementDialog(const data::Product& product, QWidget* parent)
     : QDialog(parent), m_product(product) {
     setWindowTitle(QString("Movimiento - %1 %2").arg(product.name, product.variant).trimmed());
     setModal(true);
     setMinimumWidth(340);
+    setAcceptDrops(true);
 
     auto* rootLayout = new QVBoxLayout(this);
 
@@ -48,7 +63,7 @@ MovementDialog::MovementDialog(const data::Product& product, QWidget* parent)
     form->addRow("Nota", m_noteEdit);
 
     auto* attachmentLayout = new QHBoxLayout();
-    m_attachmentLabel = new QLabel("Sin archivo adjunto", this);
+    m_attachmentLabel = new QLabel("Sin archivo adjunto (o arrastralo aqui)", this);
     m_attachmentLabel->setObjectName("VersionLabel");
     m_attachmentLabel->setWordWrap(true);
     attachmentLayout->addWidget(m_attachmentLabel, 1);
@@ -57,10 +72,10 @@ MovementDialog::MovementDialog(const data::Product& product, QWidget* parent)
     attachButton->setCursor(Qt::PointingHandCursor);
     attachmentLayout->addWidget(attachButton);
 
-    auto* clearAttachmentButton = new QPushButton("Quitar", this);
-    clearAttachmentButton->setCursor(Qt::PointingHandCursor);
-    clearAttachmentButton->setVisible(false);
-    attachmentLayout->addWidget(clearAttachmentButton);
+    m_clearAttachmentButton = new QPushButton("Quitar", this);
+    m_clearAttachmentButton->setCursor(Qt::PointingHandCursor);
+    m_clearAttachmentButton->setVisible(false);
+    attachmentLayout->addWidget(m_clearAttachmentButton);
 
     form->addRow("Factura / ticket", attachmentLayout);
 
@@ -77,24 +92,40 @@ MovementDialog::MovementDialog(const data::Product& product, QWidget* parent)
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
     connect(m_typeCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MovementDialog::onTypeChanged);
 
-    connect(attachButton, &QPushButton::clicked, this, [this, clearAttachmentButton]() {
+    connect(attachButton, &QPushButton::clicked, this, [this]() {
         const QString path = QFileDialog::getOpenFileName(this, "Adjuntar factura o ticket", {},
                                                             "Documentos e imagenes (*.pdf *.png *.jpg *.jpeg)");
-        if (path.isEmpty()) {
-            return;
+        if (!path.isEmpty()) {
+            setAttachment(path);
         }
-        m_attachmentPath = path;
-        m_attachmentLabel->setText(QFileInfo(path).fileName());
-        clearAttachmentButton->setVisible(true);
     });
 
-    connect(clearAttachmentButton, &QPushButton::clicked, this, [this, clearAttachmentButton]() {
-        m_attachmentPath.clear();
-        m_attachmentLabel->setText("Sin archivo adjunto");
-        clearAttachmentButton->setVisible(false);
-    });
+    connect(m_clearAttachmentButton, &QPushButton::clicked, this, [this]() { setAttachment({}); });
 
     onTypeChanged(m_typeCombo->currentIndex());
+}
+
+void MovementDialog::setAttachment(const QString& path) {
+    m_attachmentPath = path;
+    m_attachmentLabel->setText(path.isEmpty() ? "Sin archivo adjunto (o arrastralo aqui)" : QFileInfo(path).fileName());
+    m_clearAttachmentButton->setVisible(!path.isEmpty());
+}
+
+void MovementDialog::dragEnterEvent(QDragEnterEvent* event) {
+    if (event->mimeData()->hasUrls()) {
+        const QList<QUrl> urls = event->mimeData()->urls();
+        if (urls.size() == 1 && urls.first().isLocalFile() && isAcceptedAttachment(urls.first().toLocalFile())) {
+            event->acceptProposedAction();
+        }
+    }
+}
+
+void MovementDialog::dropEvent(QDropEvent* event) {
+    const QList<QUrl> urls = event->mimeData()->urls();
+    if (urls.size() == 1 && urls.first().isLocalFile()) {
+        setAttachment(urls.first().toLocalFile());
+        event->acceptProposedAction();
+    }
 }
 
 void MovementDialog::onTypeChanged(int /*index*/) {

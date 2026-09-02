@@ -41,7 +41,10 @@ private:
     void onAddCategory();
     void checkForUpdates(bool manual);
     void onAbout();
+    void onBackupDatabase();
+    void onRestoreDatabase();
 
+    QSqlDatabase& m_db;
     data::CategoryRepository m_categoryRepo;
     data::ProductRepository m_productRepo;
     data::MovementRepository m_movementRepo;

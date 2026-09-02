@@ -1,6 +1,13 @@
 #include "ui/MainWindow.h"
 
 #include <QAction>
+#include <QApplication>
+#include <QDateTime>
+#include <QDir>
+#include <QDirIterator>
+#include <QFile>
+#include <QFileDialog>
+#include <QFileInfo>
 #include <QGraphicsOpacityEffect>
 #include <QHBoxLayout>
 #include <QInputDialog>
@@ -9,14 +16,19 @@
 #include <QMenu>
 #include <QMenuBar>
 #include <QMessageBox>
+#include <QPixmap>
+#include <QProcess>
 #include <QPropertyAnimation>
 #include <QPushButton>
+#include <QSqlError>
+#include <QSqlQuery>
 #include <QStackedWidget>
-#include <QSvgWidget>
+#include <QStandardPaths>
 #include <QTimer>
 #include <QVBoxLayout>
 
 #include "app/Animations.h"
+#include "data/Database.h"
 #include "ui/dialogs/UpdateDialog.h"
 #include "ui/views/CutoffView.h"
 #include "ui/views/DashboardView.h"
@@ -27,8 +39,29 @@
 
 namespace ui {
 
+namespace {
+QString attachmentsPath() {
+    return QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/attachments";
+}
+
+// QDir no trae una copia recursiva; recorre el arbol de archivos y
+// reconstruye la misma estructura de carpetas en el destino.
+void copyDirRecursive(const QString& srcPath, const QString& destPath) {
+    QDir().mkpath(destPath);
+    QDirIterator it(srcPath, QDir::Files, QDirIterator::Subdirectories);
+    while (it.hasNext()) {
+        const QString filePath = it.next();
+        const QString relative = QDir(srcPath).relativeFilePath(filePath);
+        const QString destFile = destPath + "/" + relative;
+        QDir().mkpath(QFileInfo(destFile).absolutePath());
+        QFile::copy(filePath, destFile);
+    }
+}
+} // namespace
+
 MainWindow::MainWindow(QSqlDatabase& db, QWidget* parent)
     : QMainWindow(parent),
+      m_db(db),
       m_categoryRepo(db),
       m_productRepo(db),
       m_movementRepo(db),
@@ -36,7 +69,7 @@ MainWindow::MainWindow(QSqlDatabase& db, QWidget* parent)
       m_supplierRepo(db),
       m_inventoryEngine(db, m_productRepo, m_movementRepo),
       m_cutoffEngine(db, m_productRepo, m_cutoffRepo),
-      m_reportEngine(m_productRepo, m_categoryRepo, m_cutoffRepo) {
+      m_reportEngine(m_productRepo, m_categoryRepo, m_cutoffRepo, m_movementRepo) {
     setObjectName("AppRoot");
     setWindowTitle(APP_NAME);
     resize(1180, 760);
@@ -73,8 +106,10 @@ QWidget* MainWindow::buildIntroPage() {
     cardLayout->setSpacing(14);
     cardLayout->setAlignment(Qt::AlignHCenter);
 
-    auto* logo = new QSvgWidget(":/logo.svg", card);
+    auto* logo = new QLabel(card);
+    logo->setPixmap(QPixmap(":/logo.png").scaled(88, 88, Qt::KeepAspectRatio, Qt::SmoothTransformation));
     logo->setFixedSize(88, 88);
+    logo->setAlignment(Qt::AlignCenter);
     cardLayout->addWidget(logo, 0, Qt::AlignHCenter);
 
     auto* title = new QLabel(APP_NAME, card);
@@ -167,8 +202,93 @@ void MainWindow::buildMenuBar() {
 
     helpMenu->addSeparator();
 
+    QAction* backupAction = helpMenu->addAction("Respaldar base de datos...");
+    connect(backupAction, &QAction::triggered, this, &MainWindow::onBackupDatabase);
+
+    QAction* restoreAction = helpMenu->addAction("Restaurar desde respaldo...");
+    connect(restoreAction, &QAction::triggered, this, &MainWindow::onRestoreDatabase);
+
+    helpMenu->addSeparator();
+
     QAction* aboutAction = helpMenu->addAction(QString("Acerca de %1").arg(APP_NAME));
     connect(aboutAction, &QAction::triggered, this, &MainWindow::onAbout);
+}
+
+void MainWindow::onBackupDatabase() {
+    const QString defaultDir = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+    const QString destDir = QFileDialog::getExistingDirectory(this, "Respaldar base de datos - elige una carpeta destino", defaultDir);
+    if (destDir.isEmpty()) {
+        return;
+    }
+
+    const QString stamp = QDateTime::currentDateTime().toString("yyyy-MM-dd_HHmm");
+    const QString backupFolder = destDir + "/Inventario_respaldo_" + stamp;
+    QDir().mkpath(backupFolder);
+
+    // VACUUM INTO arma una copia consistente de la base sin tener que
+    // cerrar la conexion activa ni pausar al usuario.
+    QSqlQuery query(m_db);
+    query.prepare("VACUUM INTO ?");
+    query.addBindValue(backupFolder + "/inventario.db");
+    if (!query.exec()) {
+        QMessageBox::warning(this, "Respaldar base de datos",
+                              "No se pudo respaldar la base de datos: " + query.lastError().text());
+        return;
+    }
+
+    if (QDir(attachmentsPath()).exists()) {
+        copyDirRecursive(attachmentsPath(), backupFolder + "/attachments");
+    }
+
+    QMessageBox::information(this, "Respaldar base de datos", "Respaldo guardado en:\n" + backupFolder);
+}
+
+void MainWindow::onRestoreDatabase() {
+    const QString defaultDir = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+    const QString srcFolder =
+        QFileDialog::getExistingDirectory(this, "Restaurar desde respaldo - elige la carpeta del respaldo", defaultDir);
+    if (srcFolder.isEmpty()) {
+        return;
+    }
+
+    const QString srcDb = srcFolder + "/inventario.db";
+    if (!QFile::exists(srcDb)) {
+        QMessageBox::warning(this, "Restaurar base de datos",
+                              "La carpeta elegida no contiene un respaldo valido (no se encontro inventario.db).");
+        return;
+    }
+
+    const auto answer = QMessageBox::warning(
+        this, "Restaurar base de datos",
+        "Esto reemplazara TODO el inventario actual con el contenido del respaldo elegido. "
+        "Esta accion no se puede deshacer.\n\n¿Continuar?",
+        QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+    if (answer != QMessageBox::Yes) {
+        return;
+    }
+
+    const QString livePath = data::Database::defaultDatabasePath();
+    const QString tempPath = livePath + ".restoring";
+    QFile::remove(tempPath);
+    if (!QFile::copy(srcDb, tempPath)) {
+        QMessageBox::critical(this, "Restaurar base de datos", "No se pudo leer el archivo de respaldo.");
+        return;
+    }
+
+    m_db.close();
+    QFile::remove(livePath);
+    QFile::rename(tempPath, livePath);
+
+    const QString attachmentsSrc = srcFolder + "/attachments";
+    if (QDir(attachmentsSrc).exists()) {
+        QDir(attachmentsPath()).removeRecursively();
+        copyDirRecursive(attachmentsSrc, attachmentsPath());
+    }
+
+    QMessageBox::information(this, "Restaurar base de datos",
+                              "Listo. La aplicacion se va a reiniciar para cargar el respaldo.");
+    QProcess::startDetached(QApplication::applicationFilePath(), {});
+    QApplication::quit();
 }
 
 void MainWindow::refreshNavCategories() {

@@ -49,6 +49,7 @@ private:
     void onNewProduct();
     void onEditActivated(const QModelIndex& proxyIndex);
     void onEditSelected();
+    void onDuplicateSelected();
     void editProduct(const data::Product& product);
     void onRegisterMovement();
     void onDeactivateSelected();
@@ -73,6 +74,7 @@ private:
     QLineEdit* m_searchEdit = nullptr;
     QCheckBox* m_lowStockCheck = nullptr;
     QPushButton* m_editButton = nullptr;
+    QPushButton* m_duplicateButton = nullptr;
     QPushButton* m_movementButton = nullptr;
     QPushButton* m_historyButton = nullptr;
     QPushButton* m_deactivateButton = nullptr;

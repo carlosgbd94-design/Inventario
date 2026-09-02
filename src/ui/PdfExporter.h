@@ -4,6 +4,7 @@
 
 namespace domain {
 struct ReportData;
+struct MovementReportData;
 }
 
 namespace ui {
@@ -12,5 +13,8 @@ namespace ui {
 // paginado, con encabezado, logo y tabla. Devuelve false si no se pudo
 // escribir el archivo.
 bool exportReportToPdf(const domain::ReportData& data, const QString& filePath);
+
+// Igual, pero para la bitacora de movimientos en un rango de fechas.
+bool exportMovementReportToPdf(const domain::MovementReportData& data, const QString& filePath);
 
 } // namespace ui

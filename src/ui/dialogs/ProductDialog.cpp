@@ -167,6 +167,22 @@ void ProductDialog::loadProduct(const data::Product& product) {
     m_qtyHint->setVisible(true);
 }
 
+void ProductDialog::prefillFrom(const data::Product& product) {
+    const int index = m_categoryCombo->findData(product.categoryId);
+    if (index >= 0) {
+        m_categoryCombo->setCurrentIndex(index);
+    }
+    const int supplierIndex = m_supplierCombo->findData(product.supplierId);
+    if (supplierIndex >= 0) {
+        m_supplierCombo->setCurrentIndex(supplierIndex);
+    }
+    m_nameEdit->setText(product.name);
+    m_unitCombo->setCurrentText(product.unit);
+    m_costSpin->setValue(product.unitCost);
+    m_minStockSpin->setValue(product.minStock);
+    m_variantEdit->setFocus();
+}
+
 data::Product ProductDialog::resultProduct() const {
     data::Product product;
     product.id = m_productId;

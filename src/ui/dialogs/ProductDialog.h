@@ -24,6 +24,11 @@ public:
                   qint64 defaultCategoryId, QSet<QString> existingSkus, QWidget* parent = nullptr);
 
     void loadProduct(const data::Product& product);
+    // Precarga categoria/nombre/unidad/costo/stock minimo/proveedor de un
+    // producto existente, pero deja codigo, variante y cantidad en
+    // blanco: para dar de alta variantes de un mismo articulo (tallas,
+    // colores) sin retipear todo cada vez.
+    void prefillFrom(const data::Product& product);
     data::Product resultProduct() const;
 
 private:

@@ -36,8 +36,8 @@ QWidget {
 }
 
 QPushButton#PrimaryButton {
-    background-color: #D79A52;
-    color: #1C1406;
+    background-color: #3FA79A;
+    color: #082220;
     border: none;
     border-radius: 8px;
     padding: 10px 22px;
@@ -46,11 +46,11 @@ QPushButton#PrimaryButton {
 }
 
 QPushButton#PrimaryButton:hover {
-    background-color: #E4B074;
+    background-color: #57C2B4;
 }
 
 QPushButton#PrimaryButton:pressed {
-    background-color: #B97B34;
+    background-color: #2D8377;
 }
 
 QScrollBar:vertical {
@@ -99,8 +99,8 @@ QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
 }
 
 #NavList::item:selected {
-    background-color: #2E2718;
-    color: #E4B074;
+    background-color: #123531;
+    color: #57C2B4;
     font-weight: 600;
 }
 
@@ -140,11 +140,11 @@ QLineEdit, QComboBox, QDoubleSpinBox, QSpinBox {
     border-radius: 8px;
     padding: 6px 10px;
     color: #F5F1EA;
-    selection-background-color: #D79A52;
+    selection-background-color: #3FA79A;
 }
 
 QLineEdit:focus, QComboBox:focus, QDoubleSpinBox:focus, QSpinBox:focus {
-    border-color: #D79A52;
+    border-color: #3FA79A;
 }
 
 QComboBox::drop-down {
@@ -156,8 +156,8 @@ QComboBox QAbstractItemView {
     background-color: #21242C;
     border: 1px solid #2E323C;
     color: #F5F1EA;
-    selection-background-color: #2E2718;
-    selection-color: #E4B074;
+    selection-background-color: #123531;
+    selection-color: #57C2B4;
 }
 
 /* --- Tabla de inventario --- */
@@ -168,7 +168,7 @@ QTableView {
     gridline-color: #2E323C;
     border: 1px solid #2E323C;
     border-radius: 10px;
-    selection-background-color: #2E2718;
+    selection-background-color: #123531;
     selection-color: #F5F1EA;
 }
 
@@ -234,8 +234,8 @@ QMenu::item {
 }
 
 QMenu::item:selected {
-    background-color: #2E2718;
-    color: #E4B074;
+    background-color: #123531;
+    color: #57C2B4;
 }
 
 QMenu::separator {
@@ -255,7 +255,7 @@ QProgressBar {
 }
 
 QProgressBar::chunk {
-    background-color: #D79A52;
+    background-color: #3FA79A;
     border-radius: 5px;
 }
 

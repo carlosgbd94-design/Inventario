@@ -11,7 +11,7 @@ int main(int argc, char* argv[]) {
     QApplication application(argc, argv);
     QApplication::setApplicationName(APP_NAME);
     QApplication::setApplicationVersion(APP_VERSION_STRING);
-    QApplication::setWindowIcon(QIcon(":/logo.svg"));
+    QApplication::setWindowIcon(QIcon(":/logo.png"));
 
     app::ThemeManager::apply(application);
 

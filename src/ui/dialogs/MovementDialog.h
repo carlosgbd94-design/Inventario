@@ -8,6 +8,9 @@ class QComboBox;
 class QDoubleSpinBox;
 class QLineEdit;
 class QLabel;
+class QPushButton;
+class QDragEnterEvent;
+class QDropEvent;
 
 namespace ui {
 
@@ -28,8 +31,13 @@ public:
     // adjuntos de la app al confirmar el movimiento.
     QString selectedAttachmentPath() const;
 
+protected:
+    void dragEnterEvent(QDragEnterEvent* event) override;
+    void dropEvent(QDropEvent* event) override;
+
 private:
     void onTypeChanged(int index);
+    void setAttachment(const QString& path);
 
     data::Product m_product;
     QComboBox* m_typeCombo = nullptr;
@@ -37,6 +45,7 @@ private:
     QDoubleSpinBox* m_qtySpin = nullptr;
     QLineEdit* m_noteEdit = nullptr;
     QLabel* m_attachmentLabel = nullptr;
+    QPushButton* m_clearAttachmentButton = nullptr;
     QString m_attachmentPath;
 };
 

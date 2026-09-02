@@ -1,6 +1,6 @@
 <RCC>
     <qresource prefix="/">
         <file alias="theme.qss">theme.qss</file>
-        <file alias="logo.svg">../assets/logo.svg</file>
+        <file alias="logo.png">../assets/logo_ltf.png</file>
     </qresource>
 </RCC>

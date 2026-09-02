@@ -1,6 +1,8 @@
 #include "ui/views/CutoffView.h"
 
 #include <QDate>
+#include <QDateEdit>
+#include <QDateTime>
 #include <QFileDialog>
 #include <QHBoxLayout>
 #include <QColor>
@@ -97,10 +99,34 @@ CutoffView::CutoffView(data::ProductRepository& products, data::CategoryReposito
     m_comparativeTable->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
     rootLayout->addWidget(m_comparativeTable, 1);
 
+    auto* movementTitle = new QLabel("Reporte de movimientos por periodo", this);
+    movementTitle->setObjectName("SubtitleLabel");
+    rootLayout->addWidget(movementTitle);
+
+    auto* movementLayout = new QHBoxLayout();
+    movementLayout->addWidget(new QLabel("Desde", this));
+    m_movementFromDate = new QDateEdit(QDate::currentDate().addDays(-30), this);
+    m_movementFromDate->setCalendarPopup(true);
+    m_movementFromDate->setDisplayFormat("dd/MM/yyyy");
+    movementLayout->addWidget(m_movementFromDate);
+
+    movementLayout->addWidget(new QLabel("Hasta", this));
+    m_movementToDate = new QDateEdit(QDate::currentDate(), this);
+    m_movementToDate->setCalendarPopup(true);
+    m_movementToDate->setDisplayFormat("dd/MM/yyyy");
+    movementLayout->addWidget(m_movementToDate);
+
+    auto* exportMovementsButton = new QPushButton("Exportar movimientos (PDF)", this);
+    exportMovementsButton->setCursor(Qt::PointingHandCursor);
+    movementLayout->addWidget(exportMovementsButton);
+    movementLayout->addStretch(1);
+    rootLayout->addLayout(movementLayout);
+
     connect(closeMonthButton, &QPushButton::clicked, this, &CutoffView::onCloseMonth);
     connect(exportCurrentButton, &QPushButton::clicked, this, &CutoffView::onExportCurrentStock);
     connect(m_exportSelectedButton, &QPushButton::clicked, this, &CutoffView::onExportSelectedCutoff);
     connect(m_cutoffTable, &QTableWidget::itemSelectionChanged, this, &CutoffView::onSelectionChanged);
+    connect(exportMovementsButton, &QPushButton::clicked, this, &CutoffView::onExportMovementReport);
 
     reload();
 }
@@ -242,6 +268,41 @@ void CutoffView::onExportSelectedCutoff() {
         return;
     }
     QMessageBox::information(this, "Exportar PDF", QString("Corte %1 exportado correctamente.").arg(period));
+}
+
+void CutoffView::onExportMovementReport() {
+    const QDate fromDate = m_movementFromDate->date();
+    const QDate toDate = m_movementToDate->date();
+    if (fromDate > toDate) {
+        QMessageBox::warning(this, "Reporte de movimientos", "La fecha \"Desde\" no puede ser posterior a \"Hasta\".");
+        return;
+    }
+
+    const QDateTime from(fromDate, QTime(0, 0));
+    const QDateTime to(toDate, QTime(23, 59, 59));
+    const auto report = m_reportEngine.movementReport(from, to);
+
+    if (report.rows.isEmpty()) {
+        QMessageBox::information(this, "Reporte de movimientos",
+                                  "No hay movimientos registrados en ese rango de fechas.");
+        return;
+    }
+
+    const QString defaultName =
+        QString("movimientos_%1_a_%2.pdf").arg(fromDate.toString("yyyy-MM-dd"), toDate.toString("yyyy-MM-dd"));
+    const QString defaultDir = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+    const QString path = QFileDialog::getSaveFileName(this, "Exportar reporte de movimientos",
+                                                        defaultDir + "/" + defaultName, "Documento PDF (*.pdf)");
+    if (path.isEmpty()) {
+        return;
+    }
+
+    if (!exportMovementReportToPdf(report, path)) {
+        QMessageBox::warning(this, "Exportar PDF", "No se pudo generar el PDF.");
+        return;
+    }
+    QMessageBox::information(this, "Exportar PDF",
+                              QString("%1 movimiento(s) exportado(s) correctamente.").arg(report.rows.size()));
 }
 
 } // namespace ui

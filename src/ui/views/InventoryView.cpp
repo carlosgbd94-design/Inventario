@@ -94,6 +94,12 @@ InventoryView::InventoryView(data::CategoryRepository& categories, data::Product
     m_editButton->setCursor(Qt::PointingHandCursor);
     toolbarLayout->addWidget(m_editButton);
 
+    m_duplicateButton = new QPushButton("Duplicar", this);
+    m_duplicateButton->setCursor(Qt::PointingHandCursor);
+    m_duplicateButton->setToolTip("Da de alta una variante nueva (ej. otra talla) copiando categoria, nombre, "
+                                   "unidad, costo y proveedor.");
+    toolbarLayout->addWidget(m_duplicateButton);
+
     m_movementButton = new QPushButton("Registrar movimiento", this);
     m_movementButton->setCursor(Qt::PointingHandCursor);
     toolbarLayout->addWidget(m_movementButton);
@@ -154,6 +160,7 @@ InventoryView::InventoryView(data::CategoryRepository& categories, data::Product
             &InventoryView::updateActionButtonsEnabled);
     connect(newButton, &QPushButton::clicked, this, &InventoryView::onNewProduct);
     connect(m_editButton, &QPushButton::clicked, this, &InventoryView::onEditSelected);
+    connect(m_duplicateButton, &QPushButton::clicked, this, &InventoryView::onDuplicateSelected);
     connect(m_movementButton, &QPushButton::clicked, this, &InventoryView::onRegisterMovement);
     connect(m_historyButton, &QPushButton::clicked, this, &InventoryView::onViewHistory);
     connect(m_deactivateButton, &QPushButton::clicked, this, &InventoryView::onDeactivateSelected);
@@ -200,6 +207,28 @@ void InventoryView::onEditSelected() {
     if (const auto product = selectedProduct()) {
         editProduct(*product);
     }
+}
+
+void InventoryView::onDuplicateSelected() {
+    const auto productOpt = selectedProduct();
+    if (!productOpt) {
+        return;
+    }
+
+    ProductDialog dialog(m_categories.all(), m_suppliers.all(), productOpt->categoryId, existingSkus(), this);
+    dialog.prefillFrom(*productOpt);
+    if (dialog.exec() != QDialog::Accepted) {
+        return;
+    }
+
+    const data::Product product = dialog.resultProduct();
+    if (m_products.insert(product) < 0) {
+        QMessageBox::warning(this, "Producto", "No se pudo guardar el producto.");
+        return;
+    }
+
+    reload();
+    emit inventoryChanged();
 }
 
 void InventoryView::editProduct(const data::Product& product) {
@@ -385,6 +414,7 @@ void InventoryView::showContextMenu(const QPoint& pos) {
 
     QMenu menu(this);
     menu.addAction("Editar", this, &InventoryView::onEditSelected);
+    menu.addAction("Duplicar", this, &InventoryView::onDuplicateSelected);
     menu.addAction("Registrar movimiento", this, &InventoryView::onRegisterMovement);
     menu.addAction("Historial", this, &InventoryView::onViewHistory);
     menu.addSeparator();
@@ -413,6 +443,7 @@ void InventoryView::onExportPdf() {
 void InventoryView::updateActionButtonsEnabled() {
     const bool hasSelection = m_table->selectionModel() && m_table->selectionModel()->hasSelection();
     m_editButton->setEnabled(hasSelection);
+    m_duplicateButton->setEnabled(hasSelection);
     m_movementButton->setEnabled(hasSelection);
     m_historyButton->setEnabled(hasSelection);
     m_deactivateButton->setEnabled(hasSelection);
