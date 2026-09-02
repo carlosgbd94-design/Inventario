@@ -131,4 +131,15 @@ bool ProductRepository::setActive(qint64 productId, bool active) {
     return query.exec();
 }
 
+bool ProductRepository::remove(qint64 productId) {
+    QSqlQuery query(m_db);
+    query.prepare("DELETE FROM product WHERE id = ?");
+    query.addBindValue(productId);
+    if (!query.exec()) {
+        qWarning() << "ProductRepository::remove failed:" << query.lastError().text();
+        return false;
+    }
+    return true;
+}
+
 } // namespace data

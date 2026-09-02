@@ -58,6 +58,8 @@ add_library(InventarioCore STATIC
     src/domain/CutoffEngine.cpp
     src/domain/ReportEngine.h
     src/domain/ReportEngine.cpp
+    src/domain/SkuGenerator.h
+    src/domain/SkuGenerator.cpp
     src/update/UpdateChecker.h
     src/update/UpdateChecker.cpp
     src/update/UpdateDownloader.h

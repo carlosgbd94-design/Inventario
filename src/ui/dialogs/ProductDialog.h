@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QDialog>
+#include <QSet>
 #include <QVector>
 
 #include "data/Models.h"
@@ -20,18 +21,20 @@ class ProductDialog : public QDialog {
 
 public:
     ProductDialog(const QVector<data::Category>& categories, const QVector<data::Supplier>& suppliers,
-                  qint64 defaultCategoryId, QWidget* parent = nullptr);
+                  qint64 defaultCategoryId, QSet<QString> existingSkus, QWidget* parent = nullptr);
 
     void loadProduct(const data::Product& product);
     data::Product resultProduct() const;
 
 private:
+    void generateSkuFromFields();
+
     QComboBox* m_categoryCombo = nullptr;
     QComboBox* m_supplierCombo = nullptr;
     QLineEdit* m_skuEdit = nullptr;
     QLineEdit* m_nameEdit = nullptr;
     QLineEdit* m_variantEdit = nullptr;
-    QLineEdit* m_unitEdit = nullptr;
+    QComboBox* m_unitCombo = nullptr;
     QDoubleSpinBox* m_costSpin = nullptr;
     QDoubleSpinBox* m_qtySpin = nullptr;
     QDoubleSpinBox* m_minStockSpin = nullptr;
@@ -39,6 +42,7 @@ private:
 
     QVector<data::Category> m_categories;
     QVector<data::Supplier> m_suppliers;
+    QSet<QString> m_existingSkus;
     qint64 m_productId = -1;
 };
 

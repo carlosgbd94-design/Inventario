@@ -1,6 +1,8 @@
 #pragma once
 
+#include <QSet>
 #include <QWidget>
+#include <optional>
 
 #include "data/Models.h"
 
@@ -46,11 +48,18 @@ signals:
 private:
     void onNewProduct();
     void onEditActivated(const QModelIndex& proxyIndex);
+    void onEditSelected();
+    void editProduct(const data::Product& product);
     void onRegisterMovement();
     void onDeactivateSelected();
+    void onDeleteSelected();
+    void onGenerateMissingSkus();
     void onExportPdf();
     void onViewHistory();
     void updateActionButtonsEnabled();
+    void showContextMenu(const QPoint& pos);
+    std::optional<data::Product> selectedProduct() const;
+    QSet<QString> existingSkus() const;
 
     data::CategoryRepository& m_categories;
     data::ProductRepository& m_products;
@@ -63,9 +72,11 @@ private:
     QLabel* m_titleLabel = nullptr;
     QLineEdit* m_searchEdit = nullptr;
     QCheckBox* m_lowStockCheck = nullptr;
+    QPushButton* m_editButton = nullptr;
     QPushButton* m_movementButton = nullptr;
     QPushButton* m_historyButton = nullptr;
     QPushButton* m_deactivateButton = nullptr;
+    QPushButton* m_deleteButton = nullptr;
     QTableView* m_table = nullptr;
     ProductTableModel* m_model = nullptr;
     ProductFilterProxyModel* m_proxy = nullptr;

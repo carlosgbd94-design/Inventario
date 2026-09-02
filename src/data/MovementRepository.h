@@ -13,6 +13,7 @@ public:
 
     qint64 insert(const StockMovement& movement);
     QVector<StockMovement> byProduct(qint64 productId) const;
+    bool hasMovements(qint64 productId) const;
 
 private:
     QSqlDatabase& m_db;

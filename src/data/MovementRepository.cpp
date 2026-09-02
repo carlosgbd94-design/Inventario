@@ -49,4 +49,12 @@ QVector<StockMovement> MovementRepository::byProduct(qint64 productId) const {
     return result;
 }
 
+bool MovementRepository::hasMovements(qint64 productId) const {
+    QSqlQuery query(m_db);
+    query.prepare("SELECT 1 FROM stock_movement WHERE product_id = ? LIMIT 1");
+    query.addBindValue(productId);
+    query.exec();
+    return query.next();
+}
+
 } // namespace data

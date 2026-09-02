@@ -2,9 +2,11 @@
 
 #include <QDebug>
 #include <QDir>
+#include <QPair>
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QStandardPaths>
+#include <QVector>
 
 namespace data {
 
@@ -174,6 +176,22 @@ void Database::migrateToV2() {
             active INTEGER NOT NULL DEFAULT 1
         )
     )");
+
+    // Normaliza variantes de mayusculas/minusculas de la misma unidad que
+    // quedaron inconsistentes en datos capturados a mano (ej. "pza" vs
+    // "Pza"). Solo empareja texto exacto conocido, nunca reescribe datos
+    // con informacion adicional (como "Paquete 10 pzas"), asi que es
+    // seguro repetir esta pasada en cada arranque.
+    static const QVector<QPair<QString, QString>> kUnitAliases = {
+        {"pza", "Pza"}, {"pzas", "Pza"}, {"PZA", "Pza"}, {"caja", "Caja"}, {"cajas", "Caja"}, {"Pares", "Par"},
+        {"pares", "Par"}, {"par", "Par"}};
+    for (const auto& [from, to] : kUnitAliases) {
+        QSqlQuery normalize(m_db);
+        normalize.prepare("UPDATE product SET unit = ? WHERE unit = ?");
+        normalize.addBindValue(to);
+        normalize.addBindValue(from);
+        normalize.exec();
+    }
 }
 
 void Database::seedDefaultCategories() {

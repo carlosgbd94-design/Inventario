@@ -40,6 +40,7 @@ MovementDialog::MovementDialog(const data::Product& product, QWidget* parent)
     m_qtySpin = new QDoubleSpinBox(this);
     m_qtySpin->setRange(0.0, 999999.0);
     m_qtySpin->setDecimals(2);
+    m_qtySpin->setButtonSymbols(QAbstractSpinBox::NoButtons);
     form->addRow(m_qtyLabel, m_qtySpin);
 
     m_noteEdit = new QLineEdit(this);

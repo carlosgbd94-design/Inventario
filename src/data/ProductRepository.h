@@ -20,6 +20,7 @@ public:
     bool update(const Product& product);
     bool updateQuantity(qint64 productId, double newQty);
     bool setActive(qint64 productId, bool active);
+    bool remove(qint64 productId);
 
 private:
     QSqlDatabase& m_db;

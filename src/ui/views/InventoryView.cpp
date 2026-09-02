@@ -9,6 +9,7 @@
 #include <QHeaderView>
 #include <QLabel>
 #include <QLineEdit>
+#include <QMenu>
 #include <QMessageBox>
 #include <QPushButton>
 #include <QStandardPaths>
@@ -22,6 +23,7 @@
 #include "data/SupplierRepository.h"
 #include "domain/InventoryEngine.h"
 #include "domain/ReportEngine.h"
+#include "domain/SkuGenerator.h"
 #include "ui/PdfExporter.h"
 #include "ui/dialogs/MovementDialog.h"
 #include "ui/dialogs/MovementHistoryDialog.h"
@@ -88,6 +90,10 @@ InventoryView::InventoryView(data::CategoryRepository& categories, data::Product
     newButton->setCursor(Qt::PointingHandCursor);
     toolbarLayout->addWidget(newButton);
 
+    m_editButton = new QPushButton("Editar", this);
+    m_editButton->setCursor(Qt::PointingHandCursor);
+    toolbarLayout->addWidget(m_editButton);
+
     m_movementButton = new QPushButton("Registrar movimiento", this);
     m_movementButton->setCursor(Qt::PointingHandCursor);
     toolbarLayout->addWidget(m_movementButton);
@@ -99,6 +105,15 @@ InventoryView::InventoryView(data::CategoryRepository& categories, data::Product
     m_deactivateButton = new QPushButton("Desactivar", this);
     m_deactivateButton->setCursor(Qt::PointingHandCursor);
     toolbarLayout->addWidget(m_deactivateButton);
+
+    m_deleteButton = new QPushButton("Eliminar", this);
+    m_deleteButton->setCursor(Qt::PointingHandCursor);
+    toolbarLayout->addWidget(m_deleteButton);
+
+    auto* generateSkusButton = new QPushButton("Generar codigos faltantes", this);
+    generateSkusButton->setCursor(Qt::PointingHandCursor);
+    generateSkusButton->setToolTip("Asigna un codigo a todos los productos de esta categoria que aun no tienen uno.");
+    toolbarLayout->addWidget(generateSkusButton);
 
     auto* exportButton = new QPushButton("Exportar PDF", this);
     exportButton->setCursor(Qt::PointingHandCursor);
@@ -120,20 +135,30 @@ InventoryView::InventoryView(data::CategoryRepository& categories, data::Product
     m_table->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_table->verticalHeader()->setVisible(false);
     m_table->horizontalHeader()->setStretchLastSection(false);
+    // Todas las columnas se ajustan al contenido y el usuario todavia
+    // las puede arrastrar; solo "Producto" toma el espacio restante.
+    m_table->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
+    m_table->resizeColumnsToContents();
+    m_table->setColumnWidth(ProductTableModel::ColSku, 130);
+    m_table->setColumnWidth(ProductTableModel::ColVariant, 130);
     m_table->horizontalHeader()->setSectionResizeMode(ProductTableModel::ColName, QHeaderView::Stretch);
-    m_table->horizontalHeader()->setSectionResizeMode(ProductTableModel::ColVariant, QHeaderView::Stretch);
     m_table->setSortingEnabled(true);
+    m_table->setContextMenuPolicy(Qt::CustomContextMenu);
     rootLayout->addWidget(m_table, 1);
 
     connect(m_searchEdit, &QLineEdit::textChanged, m_proxy, &ProductFilterProxyModel::setFilterFixedString);
     connect(m_lowStockCheck, &QCheckBox::toggled, m_proxy, &ProductFilterProxyModel::setLowStockOnly);
     connect(m_table, &QTableView::activated, this, &InventoryView::onEditActivated);
+    connect(m_table, &QTableView::customContextMenuRequested, this, &InventoryView::showContextMenu);
     connect(m_table->selectionModel(), &QItemSelectionModel::selectionChanged, this,
             &InventoryView::updateActionButtonsEnabled);
     connect(newButton, &QPushButton::clicked, this, &InventoryView::onNewProduct);
+    connect(m_editButton, &QPushButton::clicked, this, &InventoryView::onEditSelected);
     connect(m_movementButton, &QPushButton::clicked, this, &InventoryView::onRegisterMovement);
     connect(m_historyButton, &QPushButton::clicked, this, &InventoryView::onViewHistory);
     connect(m_deactivateButton, &QPushButton::clicked, this, &InventoryView::onDeactivateSelected);
+    connect(m_deleteButton, &QPushButton::clicked, this, &InventoryView::onDeleteSelected);
+    connect(generateSkusButton, &QPushButton::clicked, this, &InventoryView::onGenerateMissingSkus);
     connect(exportButton, &QPushButton::clicked, this, &InventoryView::onExportPdf);
 
     updateActionButtonsEnabled();
@@ -151,7 +176,7 @@ void InventoryView::reload() {
 }
 
 void InventoryView::onNewProduct() {
-    ProductDialog dialog(m_categories.all(), m_suppliers.all(), m_category.id, this);
+    ProductDialog dialog(m_categories.all(), m_suppliers.all(), m_category.id, existingSkus(), this);
     if (dialog.exec() != QDialog::Accepted) {
         return;
     }
@@ -168,9 +193,17 @@ void InventoryView::onNewProduct() {
 
 void InventoryView::onEditActivated(const QModelIndex& proxyIndex) {
     const QModelIndex sourceIndex = m_proxy->mapToSource(proxyIndex);
-    const data::Product product = m_model->productAt(sourceIndex.row());
+    editProduct(m_model->productAt(sourceIndex.row()));
+}
 
-    ProductDialog dialog(m_categories.all(), m_suppliers.all(), product.categoryId, this);
+void InventoryView::onEditSelected() {
+    if (const auto product = selectedProduct()) {
+        editProduct(*product);
+    }
+}
+
+void InventoryView::editProduct(const data::Product& product) {
+    ProductDialog dialog(m_categories.all(), m_suppliers.all(), product.categoryId, existingSkus(), this);
     dialog.loadProduct(product);
     if (dialog.exec() != QDialog::Accepted) {
         return;
@@ -187,13 +220,31 @@ void InventoryView::onEditActivated(const QModelIndex& proxyIndex) {
     emit inventoryChanged();
 }
 
-void InventoryView::onRegisterMovement() {
+std::optional<data::Product> InventoryView::selectedProduct() const {
     const QModelIndexList selected = m_table->selectionModel()->selectedRows();
     if (selected.isEmpty()) {
-        return;
+        return std::nullopt;
     }
     const QModelIndex sourceIndex = m_proxy->mapToSource(selected.first());
-    const data::Product product = m_model->productAt(sourceIndex.row());
+    return m_model->productAt(sourceIndex.row());
+}
+
+QSet<QString> InventoryView::existingSkus() const {
+    QSet<QString> skus;
+    for (const data::Product& product : m_products.all(false)) {
+        if (!product.sku.isEmpty()) {
+            skus.insert(product.sku);
+        }
+    }
+    return skus;
+}
+
+void InventoryView::onRegisterMovement() {
+    const auto productOpt = selectedProduct();
+    if (!productOpt) {
+        return;
+    }
+    const data::Product product = *productOpt;
 
     MovementDialog dialog(product, this);
     if (dialog.exec() != QDialog::Accepted) {
@@ -227,24 +278,20 @@ void InventoryView::onRegisterMovement() {
 }
 
 void InventoryView::onViewHistory() {
-    const QModelIndexList selected = m_table->selectionModel()->selectedRows();
-    if (selected.isEmpty()) {
+    const auto productOpt = selectedProduct();
+    if (!productOpt) {
         return;
     }
-    const QModelIndex sourceIndex = m_proxy->mapToSource(selected.first());
-    const data::Product product = m_model->productAt(sourceIndex.row());
-
-    MovementHistoryDialog dialog(product, m_movements.byProduct(product.id), this);
+    MovementHistoryDialog dialog(*productOpt, m_movements.byProduct(productOpt->id), this);
     dialog.exec();
 }
 
 void InventoryView::onDeactivateSelected() {
-    const QModelIndexList selected = m_table->selectionModel()->selectedRows();
-    if (selected.isEmpty()) {
+    const auto productOpt = selectedProduct();
+    if (!productOpt) {
         return;
     }
-    const QModelIndex sourceIndex = m_proxy->mapToSource(selected.first());
-    const data::Product product = m_model->productAt(sourceIndex.row());
+    const data::Product product = *productOpt;
 
     const auto answer = QMessageBox::question(
         this, "Desactivar producto",
@@ -257,6 +304,93 @@ void InventoryView::onDeactivateSelected() {
     m_products.setActive(product.id, false);
     reload();
     emit inventoryChanged();
+}
+
+void InventoryView::onDeleteSelected() {
+    const auto productOpt = selectedProduct();
+    if (!productOpt) {
+        return;
+    }
+    const data::Product product = *productOpt;
+
+    if (m_movements.hasMovements(product.id)) {
+        QMessageBox::information(this, "Eliminar producto",
+                                  QString("\"%1 %2\" ya tiene movimientos registrados; borrarlo perderia esa "
+                                          "bitacora. Usa \"Desactivar\" para quitarlo del inventario activo "
+                                          "sin perder el historial.")
+                                      .arg(product.name, product.variant));
+        return;
+    }
+
+    const auto answer = QMessageBox::question(
+        this, "Eliminar producto",
+        QString("Eliminar \"%1 %2\" definitivamente? Esta accion no se puede deshacer.")
+            .arg(product.name, product.variant));
+    if (answer != QMessageBox::Yes) {
+        return;
+    }
+
+    if (!m_products.remove(product.id)) {
+        QMessageBox::warning(this, "Eliminar producto", "No se pudo eliminar el producto.");
+        return;
+    }
+
+    reload();
+    emit inventoryChanged();
+}
+
+void InventoryView::onGenerateMissingSkus() {
+    const QVector<data::Product> products = m_products.byCategory(m_category.id, true);
+    QSet<QString> skus = existingSkus();
+    QString categoryName = m_category.name;
+    for (const data::Category& category : m_categories.all()) {
+        if (category.id == m_category.id) {
+            categoryName = category.name;
+            break;
+        }
+    }
+
+    int updated = 0;
+    for (const data::Product& product : products) {
+        if (!product.sku.isEmpty()) {
+            continue;
+        }
+        data::Product withSku = product;
+        withSku.sku = domain::generateSku(categoryName, product.name, product.variant, skus);
+        skus.insert(withSku.sku);
+        if (m_products.update(withSku)) {
+            ++updated;
+        }
+    }
+
+    if (updated == 0) {
+        QMessageBox::information(this, "Generar codigos", "Todos los productos de esta categoria ya tienen codigo.");
+        return;
+    }
+
+    reload();
+    emit inventoryChanged();
+    QMessageBox::information(this, "Generar codigos",
+                              QString("Se generaron %1 codigo(s) nuevo(s).").arg(updated));
+}
+
+void InventoryView::showContextMenu(const QPoint& pos) {
+    const QModelIndex index = m_table->indexAt(pos);
+    if (index.isValid()) {
+        m_table->selectionModel()->select(index, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+    }
+    if (!selectedProduct()) {
+        return;
+    }
+
+    QMenu menu(this);
+    menu.addAction("Editar", this, &InventoryView::onEditSelected);
+    menu.addAction("Registrar movimiento", this, &InventoryView::onRegisterMovement);
+    menu.addAction("Historial", this, &InventoryView::onViewHistory);
+    menu.addSeparator();
+    menu.addAction("Desactivar", this, &InventoryView::onDeactivateSelected);
+    menu.addAction("Eliminar", this, &InventoryView::onDeleteSelected);
+    menu.exec(m_table->viewport()->mapToGlobal(pos));
 }
 
 void InventoryView::onExportPdf() {
@@ -278,9 +412,11 @@ void InventoryView::onExportPdf() {
 
 void InventoryView::updateActionButtonsEnabled() {
     const bool hasSelection = m_table->selectionModel() && m_table->selectionModel()->hasSelection();
+    m_editButton->setEnabled(hasSelection);
     m_movementButton->setEnabled(hasSelection);
     m_historyButton->setEnabled(hasSelection);
     m_deactivateButton->setEnabled(hasSelection);
+    m_deleteButton->setEnabled(hasSelection);
 }
 
 } // namespace ui
