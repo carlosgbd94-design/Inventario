@@ -40,4 +40,10 @@ Name: "{group}\Desinstalar {#MyAppName}"; Filename: "{uninstallexe}"
 Name: "desktopicon"; Description: "Crear un acceso directo en el escritorio"; GroupDescription: "Accesos directos adicionales:"
 
 [Run]
+; Windows cachea los iconos por archivo; si una actualizacion cambia el
+; icono del mismo .exe (misma ruta), el escritorio y la barra de tareas
+; se pueden quedar con el icono viejo hasta refrescar el cache. Esto lo
+; hace automaticamente, sin pedirle nada al usuario ni reiniciar el
+; Explorador.
+Filename: "{sys}\ie4uinit.exe"; Parameters: "-show"; Flags: runhidden
 Filename: "{app}\{#MyAppExeName}"; Description: "Abrir {#MyAppName}"; Flags: nowait postinstall skipifsilent
